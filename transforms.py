@@ -337,7 +337,8 @@ def buscar_comparativo(id_coleta):
             PRECO_TOP_MASTER AS "PRECO TOP MASTER",
             DIF_PRECO_TOP_MASTER,
             ROUND(PERC_DIF_PRECO_TOP_MASTER,2) AS "DIFERENCA % TOP MASTER",
-            SITUACAO
+            SITUACAO,
+            DESCRICAO_GRUPO
             FROM CURATED
             WHERE ID_COLETA = ?
         """
