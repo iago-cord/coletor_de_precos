@@ -6,6 +6,8 @@ from transforms import (tratar_preco, tratar_duplicados, adicionar_dados_filiais
 from INSERT import (iniciar_coleta, preparar_dados, insert_raw_precos, finalizar_coleta,preparar_dados_rolemar,
                     insert_precos_rolemar, preparar_dados_curated, insert_precos_curated)
 from pathlib import Path
+import time
+
 
 def carregar_coleta(precos_raw):
     print("ENTROU NO CARREGAR_COLETA")
@@ -24,8 +26,8 @@ def carregar_coleta(precos_raw):
     filiais_rolemar = pd.read_excel(FILIAIS_ROLEMAR_PATH)
     
     # Armazena o caminho do arquivo e faz a leitura de PRECOS_ROLEMAR
-    PRECOS_ROLEMAR_PATH = BASE_DIR / "Auxiliares" / "Precos Rolemar.xlsx"
-    precos_rolemar = pd.read_excel(PRECOS_ROLEMAR_PATH)
+    PRECOS_ROLEMAR_PATH = BASE_DIR / "Auxiliares" / "Precos Rolemar.parquet"
+    precos_rolemar = pd.read_parquet(PRECOS_ROLEMAR_PATH)
     
     # Armazena o caminho do arquivo e faz a leitura de TABELAS_DESCONTO
     TAB_DESCONTOS_PATH = BASE_DIR / "Auxiliares" / "Tabelas de Desconto.xlsx"
@@ -100,18 +102,20 @@ def carregar_coleta(precos_raw):
 
     # Transformando valores NaN e NA em None por que o SQLite nao aceita esses tipos
     precos_curated = precos_curated.astype(object).where(pd.notna(precos_curated), None)
-
-    # Executa a função preparar_dados que faz a transformacao de cada linha do DF em tuplas do df passado como parametro
-    dados_curated = preparar_dados_curated(precos_curated)
     
     # Executa a função insert_raw_precos que faz o INSERT do df preparado na tabela RAW_PRECOS
     insert_raw_precos(cursor, dados)
-
-    # Executa a função insert_raw_precos que faz o INSERT do df preparado na tabela PRECOS_ROLEMAR
+  
+    # Executa a função insert_precos_rolemar que faz o INSERT do df preparado na tabela PRECOS_ROLEMAR
     insert_precos_rolemar(cursor, dados_rolemar)
-
-    # Executa a função insert_precos_curated que faz o INSERT do df preparado na tabela CURATED
-    insert_precos_curated(cursor, dados_curated)
+   
+    if not precos_curated.empty:
+    
+        # Executa a função preparar_dados que faz a transformacao de cada linha do DF em tuplas do df passado como parametro
+        dados_curated = preparar_dados_curated(precos_curated)
+      
+        # Executa a função insert_precos_curated que faz o INSERT do df preparado na tabela CURATED
+        insert_precos_curated(cursor, dados_curated)
 
     # Faz a contagem que quantas linhas existem no dataframe passado como parametro
     qtd_raw = len(precos_raw)

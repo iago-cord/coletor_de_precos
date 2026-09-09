@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import sqlite3
+import time
 
 # Função pra o tratamento do preço da RAW_PRECOS
 # Retirando todos os elmentos que nao correspondem aos filtos aplicados 
@@ -191,6 +192,7 @@ def tratar_refforn(df):
 # faz todos os tratamentos e merges necessarios para retornar a curated ja na forma do comparativo
 def precos_comparativo(tabela_desconto, filiais_concorrentes, filiais_rolemar, precos_concorrentes,
                        precos_rolemar):
+
     precos_concorrentes['cod_fabricante'] = (
     precos_concorrentes['cod_fabricante']
     .astype(str)
@@ -229,9 +231,9 @@ def precos_comparativo(tabela_desconto, filiais_concorrentes, filiais_rolemar, p
        
     precos_concorrentes = precos_concorrentes[
             precos_concorrentes["preco"].notna() &
+            precos_concorrentes["preco"].str.strip().ne("") &
             (precos_concorrentes["preco"] != "R$0,00") &
             (precos_concorrentes["preco"] != "--")]
-    
     
     precos_concorrentes_estado = precos_concorrentes.merge(
     filiais_concorrentes,
@@ -239,6 +241,7 @@ def precos_comparativo(tabela_desconto, filiais_concorrentes, filiais_rolemar, p
     right_on='nome_filial',
     how='left'
     )
+
     precos_concorrentes_estado = precos_concorrentes_estado.drop(columns='nome_filial')
     precos_concorrentes_estado = precos_concorrentes_estado.drop(columns='id_filial')
     
@@ -257,7 +260,7 @@ def precos_comparativo(tabela_desconto, filiais_concorrentes, filiais_rolemar, p
     right_on=['REFFORN', 'ESTADO'],
     how='left'
     )
-       
+
     precos_comparativo = precos_comparativo[
         ~(
             (precos_comparativo['fornecedor'] == "PELLEGRINO") &
@@ -269,18 +272,20 @@ def precos_comparativo(tabela_desconto, filiais_concorrentes, filiais_rolemar, p
         subset=['cod_buscado', 'Estado','cod_fabricante', 'fornecedor', 'filial']
     )
     
-    '''precos_comparativo = precos_comparativo.drop_duplicates(
-            subset=['REFFORN', 'ESTADO','cod_fabricante', 'fornecedor', 'filial']
-        )'''
-    
     precos_comparativo = precos_comparativo.drop(columns='ESTADO')
+    
+    if precos_comparativo.empty:
+            return precos_comparativo
 
     precos_comparativo[['preco','PRECO_PRI_COM_DESCONTOS','PRECO_PRI_COM_TOP_MASTER']]=(
     precos_comparativo[['preco','PRECO_PRI_COM_DESCONTOS','PRECO_PRI_COM_TOP_MASTER']].apply(
-        lambda col:
-        col.astype(float)
+        lambda col: pd.to_numeric(col, errors = 'coerce')
+        #col.astype(float)
     ))
 
+    if precos_comparativo.empty:
+        return precos_comparativo
+    
     precos_comparativo['Diferença Preço'] = (
         precos_comparativo['preco'] - precos_comparativo['PRECO_PRI_COM_DESCONTOS']
     )

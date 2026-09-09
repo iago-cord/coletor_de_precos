@@ -134,22 +134,7 @@ def executar(codigos, filiais):
                         page.wait_for_load_state("domcontentloaded",timeout=5000)
             
                         count = produtos.count()
-                        
-                        # Trata o caso em que a busca não retornou nenhum produto.
-                        if count == 0:
-                            resultados.append({
-                                "fornecedor": "RMP",
-                                "cod_buscado": codigo,
-                                "cod_fabricante": None,
-                                "descricao": "SEM DADOS",
-                                "preco": None,
-                                "fabricante": None,
-                                "status": "NAO ENCONTRADO",
-                                "prazo": None,
-                                "filial": None
-                            })
-                            continue
-                        
+                
                         # Percorre todos os produtos encontrados para o código.
                         for i in range(count):
                             card = produtos.nth(i)
@@ -309,17 +294,17 @@ def executar(codigos, filiais):
 
                                     # Armazena o produto similar nos resultados.
                                     resultados.append({
-                                                                "fornecedor": "RMP",
-                                                                "cod_buscado": codigo,
-                                                                "cod_fabricante":cod_fabricante_similar,
-                                                                "descricao": descricao_similar,
-                                                                "preco":preco_similar,
-                                                                "fabricante": fabricante_similar,
-                                                                "status": status,
-                                                                "prazo": prazo,
-                                                                "filial": filial
-                                                                
-                                                            })
+                                        "fornecedor": "RMP",
+                                        "cod_buscado": codigo,
+                                        "cod_fabricante":cod_fabricante_similar,
+                                        "descricao": descricao_similar,
+                                        "preco":preco_similar,
+                                        "fabricante": fabricante_similar,
+                                        "status": status,
+                                        "prazo": prazo,
+                                        "filial": filial                 
+                                        })
+                                    
                                 # Localiza e fecha a janela de produtos similares.
                                 fechar_popup = page.locator("div.modal-inner-wrap button.action-close:visible")
                                 fechar_popup.click()

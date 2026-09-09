@@ -104,7 +104,7 @@ def tratar_preco_sem_estoque(precos_concorrentes):
 
     return precos_concorrentes
 
-# Função de retry necessario para RMP/DISAPE pois as paginas as vezes apresentam lentidao
+# Função de retry utilizada para tratamento de falhas em alguma parte do processo de coleta
 # faz tentativas com intervalo de 5s entre cada uma delas
 def retry_acao(acao, tentativas=5, espera=5):
     ultimo_erro = None
