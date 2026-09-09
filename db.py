@@ -5,6 +5,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 DB_DIR = BASE_DIR / "Precos-db"
 DB_PATH = DB_DIR / "precos.db"
+
 # Armazena o caminho da pasta para salvar o precos.db
 pasta = Path(DB_DIR)
 

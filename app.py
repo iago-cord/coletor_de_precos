@@ -32,7 +32,6 @@ busca_refforn = pd.read_sql_query("""
 background_local(BG_PATH)
 adicionar_logo_header(LOGO_PATH)
 
-
 # Titulo da pagina
 st.title("Coletor de Preços")
 
@@ -105,7 +104,7 @@ if dpk:
 
 
 if st.button("🚀 Buscar Preços"):
-    # Se não tiver nenhuma planilha upada ele pede para selecionar uma 
+    # Se não tiver nenhuma planilha selecionada ele pede para selecionar uma 
     if arquivo is None and not st.session_state.codigos_grupo:
         st.warning("Selecione uma planilha ou um grupo no menu lateral antes de buscar.")
         
@@ -122,7 +121,7 @@ if st.button("🚀 Buscar Preços"):
             codigos = df_codigos["codigo"].dropna().astype(str).tolist()
        
         
-        # Barra de progresso e progressao da mesma
+        # Barra de progresso e progressao
         progress_bar = st.progress(0, text="🔎 Iniciando busca...")
         log_area = st.empty()
         log_linhas = []
@@ -175,6 +174,7 @@ if st.button("🚀 Buscar Preços"):
 # pegando valores unicos de CODGRUPOPROD vindo da query para seleção na aba lateral
 grupos = sorted(busca_refforn['CODGRUPOPROD'].unique(), reverse=False)
 
+# aba lateral para seleção dos grupos a serem pesquisados
 with st.sidebar:
     st.title('🔎 Escolher Grupos P/ Coleta de Preços')
     
@@ -183,16 +183,21 @@ with st.sidebar:
         options=grupos,
         default=None
     )
+    # recebe a lista do grupos selecionados no multiselect
     condicao_grupos = busca_refforn['CODGRUPOPROD'].isin(selec_grupos)
-
+    
+    # Renomeando a coluna REFFORN para que os coletores identifiquem a coluna de codigos
     refforn_busca = busca_refforn.loc[
         condicao_grupos, ['REFFORN']
     ].rename(columns={'REFFORN': 'codigos'})
     
+    # Checkbox para seleção de codigos pela CURVA ABC
     curva_abc = st.checkbox("CURVA ABC")
     
+    # se a checkbox da curva ABC foi selecionada executa os calculos do bloco abaixo 
     if curva_abc:
-    
+        
+        # Recebe a seleção de grupos para o calculo da Curva
         refforn_busca = busca_refforn[condicao_grupos]
         
         # Ordenando os produtos dentro dos grupos
@@ -225,11 +230,14 @@ with st.sidebar:
                 min_value=1,
                 step=1
             )
-            
+            # se Quantidade de Produtos foi selecionado pega os x primeiros codigos da curva
+            # sendo x a quantidade inserida no campo de quantidae
             curva = curva.groupby('CODGRUPOPROD').head(quantidade)
             #st.write("Linhas na curva:", len(curva))
             #st.write("REFFORN únicos:", curva['REFFORN'].nunique())
-            
+        
+        # se o criterio foi o % vai selecionar o % da curva selecionado
+        # o % da curva considera o % de faturamento acumulado   
         else:
             percentual = st.number_input(
                 "Percentual do faturamento (%)",
@@ -250,6 +258,7 @@ with st.sidebar:
         refforn_busca = busca_refforn.loc[
         condicao_grupos, ['REFFORN']
         ].rename(columns={'REFFORN': 'codigos'})
+        
     # exibe quantos grupos e quantos refforn foram selecionados se la no criterio nada for selecionado retorna o total
     # de refforn de cada grupo
     st.write(f"**Grupos selecionados:** {len(selec_grupos)}")

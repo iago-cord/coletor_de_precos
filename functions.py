@@ -4,7 +4,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 import logging
 
 # faz mais de 1 tentativa para clicar no botao buscar, necessario pois as vezes acontece
-# de o botao ainda nao estar disponivel ai ela faz 3 tentativas de cliques 
+# de o botao ainda nao estar disponivel, a função faz 3 tentativas de cliques esperando 2s entre cada tentativa
 def clique_buscar(page, tentativas=3):
     buscar = page.locator("#search-cod-fab-container").get_by_role("button", name="Buscar")
     for tentativa in range(1, tentativas + 1):
@@ -28,7 +28,7 @@ def obter_filiais(page):
 
     return nomes
 
-
+# Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada DISAPE/RMP
 def selecionar_filial(page, nome_filial):
     """Abre o popup de filiais e seleciona a filial pelo nome."""
     retry_acao(lambda:page.locator("div.c-dist span.selected.popup-modal").click())
@@ -44,7 +44,8 @@ def selecionar_filial(page, nome_filial):
     
     retry_acao(lambda:page.locator("form#form-filial button.button", has_text="Aplicar").click())
     #page.locator("form#form-filial button.button", has_text="Aplicar").click()
-    
+
+# Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada SKY
 def selecionar_filial_sky(page, filial):
     """Seleciona a filial no dropdown nativo da SKY, pelo value da option."""
     page.locator("select#secloja").select_option(label=filial)
@@ -52,17 +53,19 @@ def selecionar_filial_sky(page, filial):
     #page.wait_for_timeout(1500)
     page.wait_for_load_state("networkidle", timeout=8000)
     
-    
+# Procura o campo de Busca de produtos e retorna o locator recebe como parametro a pagina PELLEGRINO
 def get_campo_busca(page):
     if page.locator('#ais-searchbox').is_visible():
         return page.locator('#ais-searchbox')
     return page.locator('#search-prod')
 
+# Procura o Botao de Busca de produtos e retorna o locator recebe como parametro a pagina PELLEGRINO
 def get_botao_buscar(page):
     if page.locator('#btn-ais-BtnPesquisar').is_visible():
         return page.locator('#btn-ais-BtnPesquisar')
     return page.locator('#btn-search-btn-prod')
 
+# Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada AUTONORTE
 def selecionar_filial_autonorte(page, nome_filial):
     if nome_filial == "Maranhão":
         cliente = page.get_by_role("textbox", name="COD ERP")
@@ -104,7 +107,7 @@ def selecionar_filial_autonorte(page, nome_filial):
         precos_concorrentes.loc[mascara, 'status'] = "Sem Estoque"
         return precos_concorrentes'''
     
-    
+# Faz o tratamento da coluna de preços e caso esteja vazia altera a coluna status para Sem Estoque    
 def tratar_preco_sem_estoque(precos_concorrentes):
 
     preco_num = (
@@ -127,7 +130,8 @@ def tratar_preco_sem_estoque(precos_concorrentes):
 
     return precos_concorrentes
 
-
+# Função de retry necessario para RMP/DISAPE pois as paginas as vezes apresentam lentidao
+# faz tentativas com intervalo de 5s entre cada uma delas
 def retry_acao(acao, tentativas=5, espera=5):
     for tentativa in range(1, tentativas + 1):
         try:

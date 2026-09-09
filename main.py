@@ -16,6 +16,7 @@ from load_db import carregar_coleta
 from transforms import buscar_comparativo
 import time
 
+# Cria a pasta checkpoints caso nao exista para salvar os arquivos RAW após o fim da coleta de cada concorrente
 os.makedirs("checkpoints", exist_ok=True)
 
 # Configuraçao dos logs de busca
@@ -26,6 +27,8 @@ logging.basicConfig(
     encoding="utf-8"
 )
 
+# Executa o modulo do concorrente passado como parametro, se o modulo terminar sem lançar exceção
+# salva o dataframa na pasta checkpoints e registra o log de salvo com sucesso
 def executar_concorrente(nome, modulo, codigos, filiais):
     try:
         if filiais:
