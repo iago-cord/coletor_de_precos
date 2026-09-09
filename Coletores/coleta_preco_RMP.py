@@ -330,14 +330,14 @@ def executar(codigos, filiais):
                                 
                             # Registra qualquer erro ocorrido durante o processamento dos produtos similares.
                             except Exception as e:
-                                logging.info(f"Erro ao processar similares do produto'{codigo}' : {e}")
+                                logging.exception(f"Erro ao processar similares do produto'{codigo}' : {e}")
                                 continue
                         
                             
                 except Exception as e:
 
                         # Trata erros gerais ocorridos durante a busca do código.
-                        logging.info(f"Erro ao buscar '{codigo}': {e}")
+                        logging.exception(f"RMP | filial={filial} | codigo={codigo} | erro na busca")
                         
                         # Registra o erro nos resultados para não perder o código que estava sendo processado.
                         resultados.append({
@@ -347,7 +347,7 @@ def executar(codigos, filiais):
                             "descricao": f"ERRO: {e}",  
                             "preco": None,
                             "fabricante": None,
-                            "status": "NÃO ENCONTRADO",
+                            "status": f"ERRO DE COLETA: {type(e).__name__}",
                             "prazo": None,
                             "filial": None
                         })
