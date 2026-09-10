@@ -31,7 +31,7 @@ def executar(codigos, filiais):
         # Cria uma nova página para acesso ao site.
         page = browser.new_page()
         
-         # URL da página de login da RMP
+        # URL da página de login da RMP
         url = "https://loja.rmp.com.br/customer/account/login"
         
         # Acessa o site utilizando a função de retry para tratar possíveis falhas.

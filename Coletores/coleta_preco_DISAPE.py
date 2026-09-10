@@ -4,7 +4,7 @@ import random
 from dotenv import load_dotenv
 import os
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
-from functions import selecionar_filial,clique_buscar
+from functions import selecionar_filial,clique_buscar, retry_acao
 import logging
 
 # Função responsável por executar a busca dos códigos de produtos.
@@ -34,33 +34,36 @@ def executar(codigos, filiais):
         browser = p.chromium.launch(headless = False)
         page = browser.new_page()
 
+        # URL da página de login da DISAPE
+        url = "https://loja.disape.com.br/customer/account/login"
+        
         # Acessa a página de login da plataforma DISAPE.
-        page.goto("https://loja.disape.com.br/customer/account/login")
+        retry_acao(lambda: page.goto(url))
 
         # Localiza o campo de usuário, clica no campo e preenche
         # com o usuário armazenado nas variáveis de ambiente.
         usuario = page.get_by_role("textbox", name="Usuário *")
-        usuario.click()
+        retry_acao(lambda: usuario.click())
         page.wait_for_timeout(random.randint(1000, 2000))
-        usuario.fill(usuario_login)
+        retry_acao(lambda: usuario.fill(usuario_login))
         
         # Localiza o campo de senha, clica no campo e preenche
         # com a senha armazenada nas variáveis de ambiente.
         senha = page.get_by_role("textbox", name="Senha")
-        senha.click()
+        retry_acao(lambda: senha.click())
         page.wait_for_timeout(random.randint(1000, 2000))
-        senha.fill(senha_login)
+        retry_acao(lambda: senha.fill(senha_login))
         
         # Aguarda um intervalo aleatório antes de realizar o login.
         page.wait_for_timeout(random.randint(1000, 2000))
         
         # Localiza o botão "Entrar" e realiza o login na plataforma.
         entrar = page.get_by_role("button", name="Entrar")
-        entrar.click()
+        retry_acao(lambda: entrar.click())
         
         # Aguarda o campo de pesquisa de código ficar visível,
         # indicando que a página principal foi carregada após o login.
-        page.get_by_role("textbox", name="Código da peça").wait_for(state="visible")
+        retry_acao(lambda: page.get_by_role("textbox", name="Código da peça").wait_for(state="visible"))
         
         # Percorre todas as filiais selecionadas para realizar
         # a coleta dos códigos em cada uma delas.
@@ -76,16 +79,16 @@ def executar(codigos, filiais):
                 logging.info(f"Disape: entrando no loop de códigos. Total: {len(codigos)}")
                 
                 # Abre o seletor de prazo da plataforma.
-                page.locator("div.c-prazo span.selected.popup-modal").click()
+                retry_acao(lambda: page.locator("div.c-prazo span.selected.popup-modal").click())
                 
                 # Aguarda a lista de opções de prazo ficar disponível.
-                page.wait_for_selector("form#form-prazo ul.scroll.items")
+                retry_acao(lambda: page.wait_for_selector("form#form-prazo ul.scroll.items"))
                 
-                 # Localiza a opção de prazo "60 Dias".
+                # Localiza a opção de prazo "60 Dias".
                 item = page.locator("form#form-prazo ul.scroll.items li.item").filter(has_text="60 Dias")
                 
                 # Seleciona a opção de prazo através do botão de rádio.
-                item.locator("input[type='radio']").click()
+                retry_acao(lambda: item.locator("input[type='radio']").click())
                 
                 # Confirma a seleção do prazo clicando no botão "Aplicar".
                 page.locator("form#form-prazo button.button", has_text="Aplicar").click()
@@ -98,8 +101,8 @@ def executar(codigos, filiais):
                     # Localiza o campo de pesquisa pelo nome "Código da peça",
                     # clica no campo e preenche com o código atual.
                     busca = page.get_by_role("textbox", name="Código da peça")
-                    busca.click()
-                    busca.fill(codigo)
+                    retry_acao(lambda: busca.click())
+                    retry_acao(lambda: busca.fill(codigo))
                     
                     # Executa a função responsável por clicar no botão de pesquisa da plataforma.
                     # A pagina as vezes demora a carregar, entao foi necessario implementar um retry no click
@@ -146,58 +149,53 @@ def executar(codigos, filiais):
                         
                         # Conta quantos produtos foram retornados pela pesquisa.
                         count = produtos.count()
-
-                        # Caso nenhum produto seja encontrado, registra o resultado
-                        # como "NAO ENCONTRADO" e passa para o próximo código.
-                        if count == 0:
-                            resultados.append({
-                                "fornecedor": "DISAPE",
-                                "cod_buscado": codigo,
-                                "cod_fabricante": None,
-                                "descricao": "SEM DADOS",
-                                "preco": None,
-                                "fabricante": None,
-                                "status": "NAO ENCONTRADO",
-                                "prazo": None,
-                                "filial": None
-                            })
-                            continue
-                            
+ 
                         # Percorre todos os produtos retornados pela pesquisa.
                         for i in range(count):
                             
                             # Obtém o produto correspondente à posição atual.
                             card = produtos.nth(i)
+                            
+                            # Define o status inicial da coleta.
+                            status = "OK"
+                            
+                            # Lista utilizada para registrar campos que apresentaram erro.
+                            erros_coleta = []
 
                             # Tenta extrair a descrição do produto.
                             try:
                                 descricao = card.locator("strong.product-item-name a.product-item-link").first.text_content(timeout=1000)
-                            except:
+                            except PlaywrightTimeoutError:
                                 descricao = None
+                                erros_coleta.append('DESCRICAO')
                                 
                             # Tenta extrair o preço do produto.
                             try:
                                 preco = card.locator("div.product-info.__row.__last div.product-item-inner div.price-box:not(.total-full) span.price").first.inner_text(timeout=1000) 
-                            except:
+                            except PlaywrightTimeoutError:
                                 preco = None
+                                erros_coleta.append('PRECO')
                                 
                             # Tenta extrair o código do fabricante.
                             try:
                                 cod_fabricante = card.locator("div.product-info.__row.__last div.cod-fabricante span").first.text_content(timeout=1000)   
-                            except:
+                            except PlaywrightTimeoutError:
                                 cod_fabricante = None
+                                erros_coleta.append('COD_FABRICANTE')
 
                             # Tenta extrair o fabricante do produto.
                             try:
                                 fabricante = card.locator("div.product-info.__row.__last div.fabricante span").first.text_content(timeout=1000)
-                            except:
+                            except PlaywrightTimeoutError:
                                 fabricante = None
+                                erros_coleta.append('FABRICANTE')
 
                             # Tenta obter o prazo atualmente selecionado na plataforma.
                             try:
                                 prazo  = page.locator("div.c-prazo > span.selected").text_content(timeout=1000)
-                            except:
+                            except PlaywrightTimeoutError:
                                 prazo = None
+                                erros_coleta.append('PRAZO')
                             
                             # Armazena os dados principais do produto em variáveis específicas antes de adicioná-los aos resultados.
                             # Necessario para evitar overwrite dos dados
@@ -205,6 +203,9 @@ def executar(codigos, filiais):
                             preco_principal = preco
                             cod_fabricante_principal = cod_fabricante
                             fabricante_principal = fabricante 
+                            
+                            if erros_coleta:
+                                status = "ERRO NA COLETA :" + ", ".join(erros_coleta)
                                 
                             # Adiciona o produto principal à lista de resultados.
                             resultados.append({
@@ -214,7 +215,7 @@ def executar(codigos, filiais):
                                 "descricao": descricao_principal,
                                 "preco":preco_principal,
                                 "fabricante": fabricante_principal,
-                                "status": "OK",
+                                "status": status,
                                 "prazo": prazo,
                                 "filial": filial
                                 })
@@ -263,7 +264,7 @@ def executar(codigos, filiais):
                                     pass
                                 
                                 # # Aguarda a lista de produtos similares ficar visível.
-                                page.wait_for_selector("div.products.list.items.popup-similares:visible")
+                                retry_acao(lambda: page.wait_for_selector("div.products.list.items.popup-similares:visible"))
                                 
                                 # Aguarda um pequeno intervalo para garantir que os dados dos similares tenham sido carregados.
                                 page.wait_for_timeout(1000)
@@ -276,29 +277,43 @@ def executar(codigos, filiais):
                                     
                                     # Obtém o produto similar correspondente à posição atual.
                                     card_sim = card_similares.nth(i)
+                                    
+                                    # Define o status inicial dos similares.
+                                    status = "Similar"
+                                    
+                                    # Lista de possíveis erros de coleta.
+                                    erros_coleta = []
 
                                     # Tenta extrair a descrição do produto similar.
                                     try:
                                         descricao_similar = card_sim.locator("div.product-block-name a.product-item-link").first.inner_text(timeout=1000)
-                                    except:
+                                    except PlaywrightTimeoutError:
                                         descricao_similar = None
+                                        erros_coleta.append('DESCRICAO')
                                     
                                     # Tenta extrair o fabricante do produto similar.
                                     try:
                                         fabricante_similar = card_sim.locator("div.product-block-fabricante div.fabricante span[data-bind]").first.inner_text(timeout=1000)
-                                    except:
+                                    except PlaywrightTimeoutError:
                                         fabricante_similar = None
+                                        erros_coleta.append('FABRICANTE')
+                                        
                                     # Tenta extrair o código do fabricante do produto similar.
                                     try:
                                         cod_fabricante_similar = card_sim.locator("div.product-block-fabricante div.cod-fabricante span[data-bind]").first.inner_text(timeout=1000)
-                                    except:
+                                    except PlaywrightTimeoutError:
                                         cod_fabricante_similar = None
+                                        erros_coleta.append('COD_FABRICANTE')
 
                                     # Tenta extrair o preço do produto similar.
                                     try:
                                         preco_similar = card_sim.locator("div.product-item-actions span.price-container span.price").first.inner_text(timeout=1000)
-                                    except:
-                                        preco_similar = None                                                                                                                                                                                                                     
+                                    except PlaywrightTimeoutError:
+                                        preco_similar = None     
+                                        erros_coleta.append('PRECO')  
+                                        
+                                    if erros_coleta:
+                                        status = "ERRO NA COLETA: " + ", ".join(erros_coleta)                                                                                                                                                                                                              
 
                                     # Adiciona o produto similar à lista de resultados.
                                     resultados.append({
@@ -327,7 +342,7 @@ def executar(codigos, filiais):
                             except Exception as e:
                                 
                                 # Registra no terminal o erro ocorrido durante o processamento dos produtos similares.
-                                print(f"Erro ao processar similares do produto'{codigo}' : {e}")
+                                logging.exception(f"Erro ao processar similares do produto'{codigo}' : {e}")
                                 
                                 # Continua a execução para o próximo produto.
                                 continue
@@ -335,7 +350,7 @@ def executar(codigos, filiais):
                 except Exception as e:
 
                         # Registra o código com status de erro e armazena a mensagem da exceção na descrição.
-                        print(f"Erro ao buscar '{codigo}': {e}")
+                        logging.exception(f"DISAPE | filial={filial} | codigo={codigo} | erro na busca")
                         resultados.append({
                             "fornecedor": "DISAPE",               
                             "cod_buscado": codigo,
