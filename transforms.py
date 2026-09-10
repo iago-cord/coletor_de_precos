@@ -222,6 +222,7 @@ def precos_comparativo(tabela_desconto, filiais_concorrentes, filiais_rolemar, p
     .str.replace("R$", "", regex=False)
     .str.replace(".", "", regex=False)
     .str.replace(",",".", regex=False)
+    .str.replace("\xa0", "", regex=False)
     )
     
     precos_rolemar[['PRECO_PRI_COM_DESCONTOS','PRECO_PRI_COM_TOP_MASTER']] = (
@@ -276,15 +277,31 @@ def precos_comparativo(tabela_desconto, filiais_concorrentes, filiais_rolemar, p
     
     if precos_comparativo.empty:
             return precos_comparativo
+        
+    print(precos_comparativo.loc[
+    precos_comparativo['fornecedor'] == 'DPK',
+    'preco'
+    ].map(repr).head())
+
+    print(precos_comparativo.loc[
+    precos_comparativo['fornecedor'] == 'DPK',
+    'preco'
+    ].dtype)
+    
 
     precos_comparativo[['preco','PRECO_PRI_COM_DESCONTOS','PRECO_PRI_COM_TOP_MASTER']]=(
     precos_comparativo[['preco','PRECO_PRI_COM_DESCONTOS','PRECO_PRI_COM_TOP_MASTER']].apply(
         lambda col: pd.to_numeric(col, errors = 'coerce')
         #col.astype(float)
     ))
+    
+    print("DEPOIS DO TO_NUMERIC:")
+    print(precos_comparativo[
+    precos_comparativo['fornecedor'] == 'DPK'
+    ][['fornecedor', 'preco']])
 
-    if precos_comparativo.empty:
-        return precos_comparativo
+    #if precos_comparativo.empty:
+    #    return precos_comparativo
     
     precos_comparativo['Diferença Preço'] = (
         precos_comparativo['preco'] - precos_comparativo['PRECO_PRI_COM_DESCONTOS']

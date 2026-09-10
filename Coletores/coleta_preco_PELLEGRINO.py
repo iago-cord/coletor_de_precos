@@ -6,7 +6,7 @@ import subprocess
 import time
 import logging
 import pandas as pd
-from functions import get_campo_busca, get_botao_buscar
+from functions import get_campo_busca, get_botao_buscar, retry_acao
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 # Função responsável por executar a busca dos códigos no site da Pellegrino
@@ -53,9 +53,12 @@ def executar(codigos):
         
         # Recupera a primeira página aberta dentro do contexto
         page = context.pages[0]
+        
+        # URL da página de login da Pellegrino
+        url = "https://compreonline.pellegrino.com.br/Account/Login/?ReturnUrl=%2F"
 
         # Acessa a página de login da Pellegrino
-        page.goto("https://compreonline.pellegrino.com.br/Account/Login/?ReturnUrl=%2F")
+        retry_acao(lambda: page.goto(url))
         
         # Aguarda o carregamento inicial do documento HTML
         page.wait_for_load_state('domcontentloaded')
@@ -70,32 +73,32 @@ def executar(codigos):
             usuario.wait_for()
             
             # Clica no campo de usuário
-            usuario.click()
+            retry_acao(lambda: usuario.click())
             
             # Aguarda um intervalo aleatório antes de preencher o campo
             page.wait_for_timeout(random.randint(1000, 2000))
             
             # Preenche o campo de usuário com a credencial armazenada no .env
-            usuario.fill(USUARIO)
+            retry_acao(lambda: usuario.fill(USUARIO))
             
             # Localiza o campo de senha através do ID
             senha = page.locator("#password")
             
             # Clica no campo de senha
-            senha.click()
+            retry_acao(lambda: senha.click())
             
             # Aguarda um intervalo aleatório antes de preencher o campo
             page.wait_for_timeout(random.randint(1000, 2000))
             
             # Preenche o campo de senha com a credencial armazenada no .env
-            senha.fill(SENHA)
+            retry_acao(lambda: senha.fill(SENHA))
 
             # Aguarda alguns segundos antes de realizar o login
             page.wait_for_timeout(random.randint(2000, 3500))
 
             # Localiza o botão de login e realiza o login
             entrar = page.get_by_role("button", name="Entrar")
-            entrar.click()
+            retry_acao(lambda: entrar.click())
             
         else:
             # Informa que a sessão já estava autenticada
@@ -109,13 +112,13 @@ def executar(codigos):
                 busca = get_campo_busca(page)
                 
                 # Clica no campo de busca
-                busca.click()
+                retry_acao(lambda: busca.click())
                 
                 # Aguarda um intervalo aleatório antes de realizar a busca
                 page.wait_for_timeout(random.randint(1500, 3500))
                 
                 # Preenche o campo com o código que será pesquisado
-                busca.fill(codigo)
+                retry_acao(lambda: busca.fill(codigo))
                 
                 # Aguarda um intervalo aleatório antes de executar a pesquisa
                 page.wait_for_timeout(random.randint(1500, 3500))

@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import logging
 import pandas as pd
-from functions import selecionar_filial_autonorte
+from functions import selecionar_filial_autonorte, retry_acao
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 # Função responsável por executar a busca dos códigos de produtos.
@@ -32,28 +32,29 @@ def executar(codigos, filiais):
         # Em seguida, acessa a página inicial da plataforma.
         browser = p.chromium.launch(headless = False)
         page = browser.new_page()
-        page.goto("https://kki.autonorte.com.br")
+        url = "https://kki.autonorte.com.br"
+        retry_acao(lambda: page.goto(url))
         
         # Localiza o campo de e-mail, clica no campo e preenche com o usuário
         # obtido das variáveis de ambiente.
         usuario = page.get_by_role("textbox", name="E-mail")
-        usuario.click()
+        retry_acao(lambda: usuario.click())
         page.wait_for_timeout(random.randint(1000, 2000))
-        usuario.fill(usuario_login)
+        retry_acao(lambda: usuario.fill(usuario_login))
         
         # Localiza o campo de senha, clica no campo e preenche com a senha
         # obtida das variáveis de ambiente.
         senha = page.get_by_role("textbox", name="Senha")
-        senha.click()
+        retry_acao(lambda: senha.click())
         page.wait_for_timeout(random.randint(1000, 2000))
-        senha.fill(senha_login)
+        retry_acao(lambda: senha.fill(senha_login))
         
         # Aguarda um intervalo aleatório antes de realizar o login.
         page.wait_for_timeout(random.randint(1000, 2000))
         
         # Localiza o botão "Entrar" e realiza o login na plataforma.
         entrar = page.get_by_role("button", name="Entrar")
-        entrar.click()
+        retry_acao(lambda: entrar.click())
         
         # Aguarda um intervalo aleatório após o login para permitir que a página
         # carregue os elementos necessários antes de iniciar a coleta.
@@ -76,16 +77,16 @@ def executar(codigos, filiais):
                     # Localiza o campo de busca pelo nome "Referência",
                     # clica no campo e preenche com o código que será pesquisado.
                     busca = page.get_by_role("textbox", name="Referência", exact=True)
-                    busca.click()
+                    retry_acao(lambda: busca.click())
                     page.wait_for_timeout(random.randint(1000, 2000))
-                    busca.fill(codigo)
+                    retry_acao(lambda: busca.fill(codigo))
                     
                     # Aguarda um intervalo aleatório antes de executar a pesquisa.
                     page.wait_for_timeout(random.randint(1000, 2000))
                     
                     # Localiza o botão "Pesquisar" e executa a busca pelo código.
                     clique_buscar = page.get_by_role("button", name="Pesquisar")
-                    clique_buscar.click()
+                    retry_acao(lambda: clique_buscar.click())
                     
                     # Aguarda o carregamento inicial dos resultados da pesquisa no DOM
                     page.wait_for_timeout(2000)
@@ -125,14 +126,14 @@ def executar(codigos, filiais):
                                         "fabricante": None,
                                         "status": "NÃO ENCONTRADO",
                                         "prazo": None,
-                                        "filial": None
+                                        "filial": filial
                                         })
                         
                         # Interrompe o processamento do código atual e passa
                         # diretamente para o próximo código da lista.
                         continue
                                     
-                    except:
+                    except PlaywrightTimeoutError:
                         
                         # Caso a mensagem de produto não encontrado não esteja
                         # visível, continua o processamento normalmente,
@@ -148,21 +149,16 @@ def executar(codigos, filiais):
                     
                     # Percorre cada produto retornado pela plataforma.
                     for i in range (total_produtos):
+                        # Define o status inicial da coleta.
+                        status = "OK"
+                        
+                        # Lista utilizada para registrar campos que apresentaram erro.
+                        erros_coleta = []
                         
                         # Obtém a linha correspondente ao produto atual.
                         # O nth(i) permite acessar uma linha específica do resultado.
                         card = produtos.nth(i)
                         
-                        # Localiza todas as células <td> existentes na linha correspondente ao produto.
-                        tds = card.locator("td")
-                        
-                         # Conta a quantidade de células existentes na linha.
-                        total_tds = tds.count()
-
-                        # Percorre todas as células da linha para acessar seus conteúdos.
-                        for i in range(total_tds):
-                            texto = tds.nth(i).inner_text()
-
                         # Seleciona a segunda célula da linha, posição 1, onde estão as informações de código e fabricante
                         td_cod = card.locator("td").nth(1)
 
@@ -172,18 +168,18 @@ def executar(codigos, filiais):
                             
                             # Como o conteúdo pode possuir mais de uma informação separada por quebra de linha, mantém somente a primeira.
                             cod_fabricante = cod_fabricante_raw.split("\n")[0].strip()
-                        except:
-                            
+                        except PlaywrightTimeoutError:
                             # Caso o código não seja encontrado, atribui None.
                             cod_fabricante = None
+                            erros_coleta.append('COD_FABRICANTE')
                         
                         # Tenta localizar e extrair o nome do fabricante presente no elemento <strong>.   
                         try:
                             fabricante = td_cod.locator("strong").first.inner_text(timeout=2000).strip()
-                        except:
-                            
+                        except PlaywrightTimeoutError:
                             # Caso o fabricante não seja encontrado, atribui None.
                             fabricante = None
+                            erros_coleta.append('FABRICANTE')
                         
                         # Seleciona a terceira célula da linha, posição 2, onde está a descrição do produto.    
                         td_desc = card.locator("td").nth(2)
@@ -191,10 +187,10 @@ def executar(codigos, filiais):
                         # Tenta extrair a descrição do produto.
                         try:
                             descricao = td_desc.locator('p.chakra-text').first.inner_text(timeout=2000).strip()
-                        except:
-                            
+                        except PlaywrightTimeoutError:
                             # Caso a descrição não seja encontrada, atribui None.
                             descricao = None
+                            erros_coleta.append('DESCRICAO')
                         
                         # Seleciona a décima quinta célula da linha, posição 14, onde está o preço do produto. 
                         td_preco = card.locator("td").nth(14)
@@ -205,10 +201,10 @@ def executar(codigos, filiais):
                             
                             # Remove quebras de linha e espaços duplicados, mantendo o conteúdo do preço em uma única string.
                             preco = " ".join(preco.split())
-                        except:
-                            
+                        except PlaywrightTimeoutError:
                             # Caso o preço não seja encontrado, atribui None.
                             preco = None
+                            erros_coleta.append('PRECO')
                         
                         # Seleciona a sétima célula da linha, posição 6, onde está a informação de estoque
                         td_est = card.locator("td").nth(6)
@@ -217,19 +213,22 @@ def executar(codigos, filiais):
                         try:
                             estoque = td_est.locator("p.chakra-text").first.inner_text(timeout=2000).strip()
                             
-                        except:
-                            
+                        except PlaywrightTimeoutError:
                             # Caso a informação de estoque não seja encontrada, atribui None.
                             estoque = None 
+                            erros_coleta.append('ESTOQUE')
+                            
                         
                         # Define o status do produto com base na quantidade em estoque.
                         # Estoque igual a zero recebe "Sem Estoque";
                         # qualquer outro valor recebe "OK".
-
-                        if estoque == '0':
+                        # Caso algum campo tenha apresentado erro, altera o status informando quais campos falharam.  
+                        if erros_coleta:
+                            status = "ERRO NA COLETA: " + ", ".join(erros_coleta)
+                        elif estoque == '0':
                             status = "Sem Estoque"
                         else:
-                            status = "OK"  
+                            status = "OK"
                         
                         # Adiciona todas as informações coletadas do produto à lista de resultados.  
                         resultados.append({
@@ -257,7 +256,7 @@ def executar(codigos, filiais):
             voltar_clientes = page.locator("aside a[href='/ficha-clientes']")
             
             # Localiza o link responsável por retornar à tela de seleção de clientes/filiais e realiza o clique.
-            voltar_clientes.click()
+            retry_acao(lambda: voltar_clientes.click())
             
             # Aguarda o carregamento da tela antes de selecionar a próxima filial.
             page.wait_for_timeout(random.randint(1000, 2000))

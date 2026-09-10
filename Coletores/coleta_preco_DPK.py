@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import os
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 import logging
+from functions import retry_acao
 
 # Função responsável por executar a busca dos códigos de produtos.
 # Recebe como parâmetros a lista de códigos e a lista de filiais selecionadas.
@@ -37,13 +38,13 @@ def executar(codigos,filiais):
         url = "https://www.dpk.com.br/#/login"
         
         # Acessa a página de login.
-        page.goto(url)
+        retry_acao(lambda: page.goto(url))
         
         # Localiza o campo de e-mail, clica no campo e preenche
         # com o usuário armazenado nas variáveis de ambiente.
         usuario = page.get_by_role("textbox", name="Email")
-        usuario.click()
-        usuario.fill(usuario_login)
+        retry_acao(lambda: usuario.click())
+        retry_acao(lambda: usuario.fill(usuario_login))
         
         # Aguarda um intervalo aleatório antes de continuar.
         page.wait_for_timeout(random.randint(1000,2000))
@@ -51,29 +52,29 @@ def executar(codigos,filiais):
         # Localiza o campo de senha, clica no campo e preenche
         # com a senha armazenada nas variáveis de ambiente.
         senha = page.get_by_role("textbox", name="Senha")
-        senha.click()
-        senha.fill(senha_login)
+        retry_acao(lambda: senha.click())
+        retry_acao(lambda: senha.fill(senha_login))
         
         # Aguarda um intervalo aleatório antes de continuar.
         page.wait_for_timeout(random.randint(1000,2000))
         
         # Localiza o botão "Entrar" e realiza o login na plataforma.
         entrar = page.get_by_role("button", name="Entrar")
-        entrar.click()
+        retry_acao(lambda: entrar.click())
         
         # Aguarda o campo de pesquisa ficar visível.
         # A disponibilidade desse elemento indica que a página principal foi carregada após o login.
-        page.get_by_role("search", name="Busque por código ou descriçã").wait_for(state='visible')
+        retry_acao(lambda: page.get_by_role("search", name="Busque por código ou descriçã").wait_for(state='visible'))
         
         # Percorre todas as filiais informadas para realizar a coleta dos códigos em cada uma delas.
         for filial in lista_filiais:
             
             # Abre o seletor de filiais da plataforma.
-            page.locator(".mat-select-arrow").first.click()
+            retry_acao(lambda: page.locator(".mat-select-arrow").first.click())
             
             # Localiza a filial correspondente ao nome recebido e realiza sua seleção.
             item = page.get_by_text(filial)
-            item.click()
+            retry_acao(lambda: item.click())
             
             # Percorre todos os códigos informados para realizar a pesquisa na filial atualmente selecionada.
             for codigo in codigos:
@@ -81,18 +82,18 @@ def executar(codigos,filiais):
                 try:
                     
                     # Aguarda o campo de pesquisa ficar visível antes de iniciar a pesquisa do código.
-                    page.get_by_role("search", name="Busque por código ou descriçã").wait_for(state='visible')
+                    retry_acao(lambda: page.get_by_role("search", name="Busque por código ou descriçã").wait_for(state='visible'))
                     
                     # Localiza o campo de pesquisa.
                     busca = page.get_by_role("search", name="Busque por código ou descriçã")
                     
                     # Clica no campo e preenche com o código atual.
-                    busca.click()
-                    busca.fill(codigo)
+                    retry_acao(lambda: busca.click())
+                    retry_acao(lambda: busca.fill(codigo))
                     
                     # Localiza o botão "Buscar" e executa a pesquisa.
                     buscar = page.get_by_role("button", name="Buscar")
-                    buscar.click()
+                    retry_acao(lambda: buscar.click())
                     
                     # Localiza o elemento utilizado pela plataforma para informar que nenhum produto foi encontrado.
                     nao_encontrado = page.locator("div.kdp-favorito-vazio")
@@ -116,7 +117,7 @@ def executar(codigos,filiais):
                             "fabricante": None,
                             "status": "Não Encontrado",
                             "prazo": None,
-                            "filial": None
+                            "filial": filial
                         })
                         
                         # Interrompe o processamento do código atual
@@ -217,7 +218,7 @@ def executar(codigos,filiais):
                         url_busca = page.url
                         
                         # Clica no botão para abrir os produtos similares.
-                        botao_similar.click()
+                        retry_acao(lambda: botao_similar.click())
                         
                         # Aguarda o carregamento da janela de produtos similares.
                         page.wait_for_timeout(2000)
@@ -297,7 +298,7 @@ def executar(codigos,filiais):
                         page.wait_for_timeout(2000)
                         
                         # Retorna para a URL da página onde a busca do produto principal estava sendo realizada.
-                        page.goto(url_busca)
+                        retry_acao(lambda: page.goto(url_busca))
                 # Garante que o intervalo entre as pesquisas seja executado
                 # mesmo quando ocorrer uma exceção durante o processamento.                
                 finally:

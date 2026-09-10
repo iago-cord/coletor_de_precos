@@ -323,7 +323,7 @@ def executar(codigos, filiais):
                                         "descricao": descricao_similar,
                                         "preco":preco_similar,
                                         "fabricante": fabricante_similar,
-                                        "status": "Similar",
+                                        "status": status,
                                         "prazo": prazo,
                                         "filial": filial
                                                                 
