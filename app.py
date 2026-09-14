@@ -5,6 +5,7 @@ from io import BytesIO
 from ui import background_local, adicionar_logo_header
 import sqlite3
 from pathlib import Path
+from analise_preco import analise_preco
 
 
 # Caminhos Relativos 
@@ -75,7 +76,7 @@ filiais_autonorte = []
 if autonorte:
     filiais_autonorte = st.multiselect(
         "Filiais Auto Norte",
-        ["Maranhão", "Pernambuco", "Pará", "Goiás"]
+        ["Maranhão", "Pernambuco", "Pará", "Goiás","Bahia"]
     )
     
 sky_sp = st.checkbox("SKY - SP")
@@ -157,16 +158,14 @@ if st.button("🚀 Buscar Preços"):
         progress_bar.progress(100, text="Busca concluída!")
         st.success("Busca concluída!")
         st.dataframe(resultado)
+        
+        analise_precos = analise_preco(resultado)
 
-        # salvando o dataframe na memoria para disponibilizar para download
-        buffer = BytesIO()
-        resultado.to_excel(buffer, index=False, engine='openpyxl')
-        buffer.seek(0)
 
         # botao de download com o resultado final
         st.download_button(
             label="📥 Baixar planilha de resultados",
-            data=buffer,
+            data=analise_precos,
             file_name="comparativo_precos.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )

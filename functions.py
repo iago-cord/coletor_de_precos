@@ -65,7 +65,8 @@ def selecionar_filial_autonorte(page,nome_filial):
         "Maranhão": "26570",
         "Pernambuco": "00238",
         "Pará": "84001",
-        "Goiás": "66976"
+        "Goiás": "66976",
+        "Bahia": "00806"
     }       
     
     codigo = cliente_filial.get(nome_filial)
