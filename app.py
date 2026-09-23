@@ -1,37 +1,32 @@
 import streamlit as st
-import main
+from src import main
 import pandas as pd
 from io import BytesIO
-from ui import background_local, adicionar_logo_header
 import sqlite3
 from pathlib import Path
-from analise_preco import analise_preco
+from src import analise_preco
 
 
 # Caminhos Relativos 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "Precos-db" / "precos.db"
-BG_PATH = BASE_DIR / "Assets" / "background_rolemar.png"
-LOGO_PATH = BASE_DIR / "Assets" / "logo.png"
+DB_PATH = BASE_DIR / "Precos-db" / "database.db"
+BG_PATH = BASE_DIR / "Assets" / "background_interface.png"
+LOGO_PATH = BASE_DIR / "Assets" / "logo_empresa.png"
 
 # Inicia a conexao com o Banco de Dados passando o caminho do arquivo precos.db
 conexao = sqlite3.connect(DB_PATH)
 
 # Query para obter os dados da CURVA ABC
-busca_refforn = pd.read_sql_query("""
+busca_cod_fornecedor = pd.read_sql_query("""
                                   SELECT
-                                  CODPROD,
-                                  REFFORN,
-                                  CODGRUPOPROD,
-                                  DESCRGRUPOPROD,
+                                  COD_PRODUTO,
+                                  COD_FORNECEDOR,
+                                  COD_GRUPO,
+                                  DESCRICAO_GRUPO,
                                   FATURAMENTO
-                                  FROM BUSCA_REFFORN
+                                  FROM BUSCA_COD_FORNECEDOR
                                   """, conexao)
 
-
-# Definindo a imagem de Background e Logo
-background_local(BG_PATH)
-adicionar_logo_header(LOGO_PATH)
 
 # Titulo da pagina
 st.title("Coletor de Preços")
@@ -44,63 +39,61 @@ if 'codigos_grupo' not in st.session_state:
 arquivo = st.file_uploader("Selecione a Planilha")
 
 # Insere os Checkbox para escolher de quais concorrentes quais filiais buscar
-disape = st.checkbox("DISAPE")
-filiais_disape=[]
-if disape:
-    filiais_disape = st.multiselect(
-        "Filiais DISAPE",
-        ["CARIACICA/ES","SAO JOSE/SC"]
-        #"PORTO ALEGRE/RS","GOIANIA/GO","CURITIBA/PR" - Fiiais desativadas da coleta por regra de negocio
+ds = st.checkbox("DS")
+filiais_ds=[]
+if ds:
+    filiais_ds = st.multiselect(
+        "Filiais DS",
+        ["Filial 01","Filial 02"]
     )
-rmp = st.checkbox("RMP")
-filiais_rmp = []
-if rmp:
-    filiais_rmp = st.multiselect(
-        "Filiais RMP",
-        ["PORTO ALEGRE/RS"]
-        #"SAO PAULO/SP","CARIACICA/ES","CURITIBA/PR","SAO JOSE/SC" - Fiiais desativadas da coleta por regra de negocio
+r = st.checkbox("R")
+filiais_r = []
+if r:
+    filiais_r = st.multiselect(
+        "Filiais R",
+        ["Filial 01"]
     )
     
-sky = st.checkbox("SKY")
-filiais_sky = []
-if sky:
-    filiais_sky = st.multiselect(
-        "Filiais SKY",
-        ["SKY AUTOMOTIVE (POA)", "ENVIA PEÇAS (PELOTAS)", "EMBREPAR (POA)"]
+s = st.checkbox("S")
+filiais_s = []
+if s:
+    filiais_s = st.multiselect(
+        "Filiais S",
+        ["Filial 01","Filial 02"]
     )
 
-pellegrino = st.checkbox("Pellegrino")
+p = st.checkbox("P")
 
-autonorte = st.checkbox("Auto Norte")
-filiais_autonorte = []
-if autonorte:
-    filiais_autonorte = st.multiselect(
-        "Filiais Auto Norte",
-        ["Maranhão", "Pernambuco", "Pará", "Goiás","Bahia"]
+a = st.checkbox("A")
+filiais_a = []
+if a:
+    filiais_a = st.multiselect(
+        "Filiais A",
+        ["Filial 01","Filial 02","Filial 03","Filial 04"]
     )
     
-sky_sp = st.checkbox("SKY - SP")
-filiais_sky_sp = []
-if sky_sp:
-    filiais_sky_sp = st.multiselect(
-    "Filiais SKY - SP",
-    ['SKY AUTOMOTIVE (GUARULHOS)', 'SKY AUTOMOTIVE (BOM RETIRO)', 'Embrepar (GO - Perimetral)' ]
+ssp = st.checkbox("SSP")
+filiais_ssp = []
+if ssp:
+    filiais_ssp = st.multiselect(
+    "Filiais SSP",
+    ["Filial 01","Filial 02","Filial 03"]
     )    
 
-sky_pr = st.checkbox("SKY - PR")
-filiais_sky_pr = []
-if sky_pr:
-    filiais_sky_pr = st.multiselect(
-        "Filiais SKY - PR",
-        ['EMBREPAR (Londrina)','ENVIA PEÇAS (LONDRINA)']
+spr = st.checkbox("SPR")
+filiais_spr = []
+if spr:
+    filiais_spr = st.multiselect(
+        "Filiais SPR",
+        ["Filial 01"]
     )
     
-dpk = st.checkbox("DPK - PR")
-filiais_dpk = []
-if dpk:
-    filiais_dpk = st.multiselect(
-        "Filiais DPK - PR",
-        ['LONDRINA', 'CURITIBA', 'CASCAVEL']
+d = st.checkbox("D")
+filiais_d = []
+if d:
+    filiais_d = st.multiselect(
+        "Filiais D",
+        ["Filial 01","Filial 02","Filial 03"]
     )
 
 
@@ -110,7 +103,7 @@ if st.button("🚀 Buscar Preços"):
         st.warning("Selecione uma planilha ou um grupo no menu lateral antes de buscar.")
         
         # se nao tiver nenhum concorrente selecionado ele pede para selecionar um concorrente
-    elif not (disape or rmp or sky or pellegrino or autonorte or sky_sp or sky_pr or dpk):
+    elif not (ds or r or s or p or a or ssp or spr or d):
         st.warning("⚠️ Selecione ao menos um concorrente.")   
     else:
         # verifica se algum grupo foi selecionado na aba lateral 
@@ -140,19 +133,19 @@ if st.button("🚀 Buscar Preços"):
                 etapa_area.info(f"{etapa}...")
         # chamando a função do main.py para iniciar a busca e callback para atualizar o progresso
         resultado = main.executar(
-            codigos, disape=disape, rmp=rmp, sky=sky,pellegrino=pellegrino,autonorte=autonorte,sky_sp=sky_sp,sky_pr = sky_pr,dpk=dpk,
-            filiais_disape=filiais_disape,
-            filiais_rmp = filiais_rmp,
-            filiais_sky = filiais_sky,
-            filiais_autonorte = filiais_autonorte,
-            filiais_sky_sp = filiais_sky_sp,
-            filiais_sky_pr = filiais_sky_pr,
-            filiais_dpk= filiais_dpk,
+            codigos, ds=ds, r=r, s=s, p=p, a=a, ssp=ssp, spr = spr, d=d,
+            filiais_ds=filiais_ds,
+            filiais_r = filiais_r,
+            filiais_s = filiais_s,
+            filiais_a = filiais_a,
+            filiais_ssp = filiais_ssp,
+            filiais_spr = filiais_spr,
+            filiais_d= filiais_d,
             callback=atualizar_progresso
         )
         
         st.write("Quantidade de códigos:", len(codigos))
-        #st.write("Primeiros códigos:", codigos[:10])
+
 
         # Mensagem de conclusao da busca e exibição do resultado
         progress_bar.progress(100, text="Busca concluída!")
@@ -170,8 +163,8 @@ if st.button("🚀 Buscar Preços"):
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-# pegando valores unicos de CODGRUPOPROD vindo da query para seleção na aba lateral
-grupos = sorted(busca_refforn['CODGRUPOPROD'].unique(), reverse=False)
+# pegando valores unicos de COD_GRUPO vindo da query para seleção na aba lateral
+grupos = sorted(busca_cod_fornecedor['COD_GRUPO'].unique(), reverse=False)
 
 # aba lateral para seleção dos grupos a serem pesquisados
 with st.sidebar:
@@ -183,12 +176,12 @@ with st.sidebar:
         default=None
     )
     # recebe a lista do grupos selecionados no multiselect
-    condicao_grupos = busca_refforn['CODGRUPOPROD'].isin(selec_grupos)
+    condicao_grupos = busca_cod_fornecedor['COD_GRUPO'].isin(selec_grupos)
     
-    # Renomeando a coluna REFFORN para que os coletores identifiquem a coluna de codigos
-    refforn_busca = busca_refforn.loc[
-        condicao_grupos, ['REFFORN']
-    ].rename(columns={'REFFORN': 'codigos'})
+    # Renomeando a coluna COD_FORNECEDOR para que os coletores identifiquem a coluna de codigos
+    cod_fornecedor_busca = busca_cod_fornecedor.loc[
+        condicao_grupos, ['COD_FORNECEDOR']
+    ].rename(columns={'COD_FORNECEDOR': 'codigos'})
     
     # Checkbox para seleção de codigos pela CURVA ABC
     curva_abc = st.checkbox("CURVA ABC")
@@ -197,32 +190,32 @@ with st.sidebar:
     if curva_abc:
         
         # Recebe a seleção de grupos para o calculo da Curva
-        refforn_busca = busca_refforn[condicao_grupos]
+        cod_fornecedor_busca = busca_cod_fornecedor[condicao_grupos]
         
         # Ordenando os produtos dentro dos grupos
-        curva = refforn_busca.sort_values(
-            ['CODGRUPOPROD', 'FATURAMENTO'],
+        curva = cod_fornecedor_busca.sort_values(
+            ['COD_GRUPO', 'FATURAMENTO'],
             ascending=[True, False]
         )
         
-        # Calculando a participação de cada CODPROD no faturamento
+        # Calculando a participação de cada COD_PRODUTO no faturamento
         curva['PERC_FATURAMENTO'] = (
             curva['FATURAMENTO'] / 
-            curva.groupby('CODGRUPOPROD')['FATURAMENTO'].transform('sum')
+            curva.groupby('COD_GRUPO')['FATURAMENTO'].transform('sum')
         )
         
         # Calculando o acumulado
         curva['PERC_ACUMULADO'] = (
-            curva.groupby('CODGRUPOPROD')['PERC_FATURAMENTO'].cumsum()
+            curva.groupby('COD_GRUPO')['PERC_FATURAMENTO'].cumsum()
         )
         
-        # adiciona dois checkbox para escolher a forma de seleção dos refforn de cada grupo
+        # adiciona dois checkbox para escolher a forma de seleção dos cod_fornecedor de cada grupo
         criterio = st.radio(
         "Critério da curva",
         ["Quantidade de produtos", "Percentual do faturamento"]
         )
         
-        # verifica qual criterio selecionado para retornar os refforn para busca
+        # verifica qual criterio selecionado para retornar os cod_fornecedor para busca
         if criterio == "Quantidade de produtos":
             quantidade = st.number_input(
                 "Quantidade de produtos",
@@ -231,9 +224,7 @@ with st.sidebar:
             )
             # se Quantidade de Produtos foi selecionado pega os x primeiros codigos da curva
             # sendo x a quantidade inserida no campo de quantidae
-            curva = curva.groupby('CODGRUPOPROD').head(quantidade)
-            #st.write("Linhas na curva:", len(curva))
-            #st.write("REFFORN únicos:", curva['REFFORN'].nunique())
+            curva = curva.groupby('COD_GRUPO').head(quantidade)
         
         # se o criterio foi o % vai selecionar o % da curva selecionado
         # o % da curva considera o % de faturamento acumulado   
@@ -249,24 +240,24 @@ with st.sidebar:
             curva['PERC_ACUMULADO'] <= percentual / 100
         ]
             
-        refforn_busca = curva[['REFFORN']].rename(
-            columns={'REFFORN': 'codigos'}
+        cod_fornecedor_busca = curva[['COD_FORNECEDOR']].rename(
+            columns={'COD_FORNECEDOR': 'codigos'}
         )
-    # renomenado a coluna REFFORN para codigos que é o padrao utilizado nos coletores    
+    # renomenado a coluna COD_FORNECEDOR para codigos que é o padrao utilizado nos coletores    
     else:
-        refforn_busca = busca_refforn.loc[
-        condicao_grupos, ['REFFORN']
-        ].rename(columns={'REFFORN': 'codigos'})
+        cod_fornecedor_busca = busca_cod_fornecedor.loc[
+        condicao_grupos, ['COD_FORNECEDOR']
+        ].rename(columns={'COD_FORNECEDOR': 'codigos'})
         
-    # exibe quantos grupos e quantos refforn foram selecionados se la no criterio nada for selecionado retorna o total
+    # exibe quantos grupos e quantos cod_fornecedor foram selecionados se la no criterio nada for selecionado retorna o total
     # de refforn de cada grupo
     st.write(f"**Grupos selecionados:** {len(selec_grupos)}")
-    st.write(f"**Códigos encontrados:** {len(refforn_busca)}")
+    st.write(f"**Códigos encontrados:** {len(cod_fornecedor_busca)}")
     
     # botão para levar os codigos para busca incluindo no estao da sessao
     if st.button("Usar Grupos Selecionados"):
         st.session_state.codigos_grupo = (
-            refforn_busca['codigos'].dropna().astype(str).tolist()
+            cod_fornecedor_busca['codigos'].dropna().astype(str).tolist()
         )
 
 

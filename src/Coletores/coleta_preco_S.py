@@ -1,21 +1,21 @@
 from playwright.sync_api import sync_playwright
 import pandas as pd
+import logging
 import random
 from dotenv import load_dotenv
 import os
-from functions import selecionar_filial_sky, retry_acao
-import logging
+from src.functions import selecionar_filial_s, retry_acao
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-# Função principal responsável por realizar as buscas dos códigos no site da SKY
+# Função principal responsável por realizar as buscas dos códigos no site
 # e retornar os produtos encontrados, incluindo produtos similares.
 def executar(codigos,filiais):
-    
+
     # Carrega as credenciais armazenadas nas variáveis de ambiente.
     load_dotenv()
-    cnpj_login = os.getenv("SKY_PR_CNPJ")
-    usuario_login = os.getenv("SKY_PR_USUARIO")
-    senha_login = os.getenv("SKY_PR_SENHA")
+    cnpj_login = os.getenv("CNPJ")
+    usuario_login = os.getenv("USUARIO")
+    senha_login = os.getenv("SENHA")
 
     # Lista onde serão armazenados todos os resultados coletados.
     resultados = []
@@ -29,10 +29,10 @@ def executar(codigos,filiais):
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
         
-        # URL da página de login da SKY
-        url = "https://cliente.skypecas.com.br/usuario/login"
-        
-        # Acessa a página de login da SKY.
+        # URL da página de login
+        url = "https://www.sitedoconcorrente.com.br"
+
+        # Acessa a página de login
         retry_acao(lambda: page.goto(url))
 
         # Preenche o CNPJ/CPF utilizado no acesso.
@@ -57,10 +57,6 @@ def executar(codigos,filiais):
         # Realiza o primeiro clique no botão de login.
         entrar = page.get_by_role("button", name="Entrar")
         retry_acao(lambda: entrar.click())
-        page.wait_for_timeout(random.randint(1000, 2000))
-        
-        # Realiza o segundo clique caso o site apresente uma segunda etapa do processo de autenticação
-        retry_acao(lambda: page.get_by_role("button", name="Entrar").click())
 
         # Aguarda o campo de busca ficar disponível, confirmando o acesso.
         page.get_by_role("textbox", name="Código da Peça").wait_for(state="visible")
@@ -70,19 +66,19 @@ def executar(codigos,filiais):
             
             # Quando uma filial foi informada, realiza sua seleção no site.
             if filial:
-                selecionar_filial_sky(page, filial)
+                selecionar_filial_s(page, filial)
                 
                 # Após a troca de filial, verifica se o site apresentou algum aviso que precise ser confirmado.
                 try:
                     erro_busca =  page.get_by_role("dialog", name="Aviso!")
                     erro_busca.wait_for(state='visible', timeout=1000)
                     retry_acao(lambda: erro_busca.get_by_role("button", name="OK").click())
-                            
+                                            
                 except PlaywrightTimeoutError:
                     # Caso nenhum aviso seja exibido, continua normalmente
                     pass
                 
-                page.wait_for_timeout(1000)
+                page.wait_for_timeout(2000)
 
             # Percorre todos os códigos para a filial atual.
             for codigo in codigos:
@@ -101,12 +97,12 @@ def executar(codigos,filiais):
                     popup_ok = page.get_by_role("button", name="OK")
 
                     try:
-                        popup_ok.wait_for(state="visible", timeout=3000)
-                        retry_acao(lambda: popup_ok.click())
-
+                        popup_ok.wait_for(state="visible", timeout=2000)
+                        popup_ok.click()
+                        
                         # Registra o código sem resultado.
                         resultados.append({
-                            "fornecedor": "SKY Auto Peças",
+                            "fornecedor": "S",
                             "cod_buscado": codigo, 
                             "cod_fabricante": None,
                             "descricao": None, 
@@ -133,7 +129,7 @@ def executar(codigos,filiais):
                         
                         # Define o status inicial da coleta
                         status = 'OK'
-                        
+                                                
                         # Lista utilizada para registrar campos que apresentaram erro.
                         erros_coleta = []
                         
@@ -144,7 +140,7 @@ def executar(codigos,filiais):
                             preco_principal = None
                             erros_coleta.append('PRECO')
                         
-                        # Coleta o código do fabricante.   
+                        # Coleta o código do fabricante.  
                         try:
                             cod_fabricante_principal = card.locator("div.fleft.codfab strong").first.inner_text(timeout=1000)
                         except PlaywrightTimeoutError:
@@ -158,7 +154,7 @@ def executar(codigos,filiais):
                             descricao_principal = None
                             erros_coleta.append('DESCRICAO')
                         
-                        # Coleta o fabricante.   
+                        # Coleta o fabricante.    
                         try: 
                             fabricante_principal = card.locator("div.fornecedor").first.inner_text(timeout=1000)
                         except PlaywrightTimeoutError:
@@ -168,10 +164,10 @@ def executar(codigos,filiais):
                         # Caso algum campo tenha apresentado erro, altera o status informando quais campos falharam.
                         if erros_coleta:
                             status = "ERRO NA COLETA: " + ", ".join(erros_coleta)
-                                                        
+                        
                         # Registra o produto principal nos resultados.    
                         resultados.append({
-                            "fornecedor": "SKY Auto Peças",
+                            "fornecedor": "S",
                             "cod_buscado": codigo,
                             "cod_fabricante": cod_fabricante_principal,
                             "descricao": descricao_principal,
@@ -191,7 +187,7 @@ def executar(codigos,filiais):
                         try:
                             # Abre a janela de produtos similares.
                             card.get_by_role("link",name="Similar").click(no_wait_after=True)
-                            
+
                             # Aguarda a janela de similares ficar disponível.
                             page.wait_for_selector("div.ajax.modal:visible")
                             page.wait_for_timeout(2000)
@@ -206,7 +202,7 @@ def executar(codigos,filiais):
                                 
                                 # Define o status inicial dos similares.
                                 status = "Similar"
-                                
+                                                                
                                 # Lista de possíveis erros de coleta.
                                 erros_coleta = []
                                 
@@ -224,14 +220,14 @@ def executar(codigos,filiais):
                                     cod_fabricante_similar = None
                                     erros_coleta.append('COD_FABRICANTE')
                                 
-                                # Coleta a descrição do similar.    
+                                # Coleta a descrição do similar.   
                                 try:
                                     descricao_similar = card_similares.locator("div.nome").inner_text(timeout=1000)
                                 except PlaywrightTimeoutError:
                                     descricao_similar = None
                                     erros_coleta.append('DESCRICAO')
                                 
-                                # Coleta o fabricante do similar.   
+                                # Coleta o fabricante do similar.    
                                 try:
                                     fabricante_similar = card_similares.locator("div.fornecedor").inner_text(timeout=1000)
                                 except PlaywrightTimeoutError:
@@ -242,9 +238,9 @@ def executar(codigos,filiais):
                                 if erros_coleta:
                                     status = "ERRO NA COLETA: " + ", ".join(erros_coleta)
                                 
-                                # Registra o produto similar nos resultados.
+                                # Registra o produto similar nos resultados.   
                                 resultados.append({
-                                    "fornecedor": "SKY Auto Peças",
+                                    "fornecedor": "S",
                                     "cod_buscado": codigo,
                                     "cod_fabricante": cod_fabricante_similar,
                                     "descricao": descricao_similar,
@@ -255,7 +251,7 @@ def executar(codigos,filiais):
                                     "filial": filial
                                 })
                             
-                            # Localiza o botão de fechamento da janela de similares.
+                            # Localiza o botão de fechamento da janela de similares.    
                             fechar_popup = page.locator("a.close-modal")
                             
                             # Fecha a janela caso o botão esteja disponível.
@@ -263,18 +259,18 @@ def executar(codigos,filiais):
                                 fechar_popup.click(no_wait_after=True)
                             
                             # Aguarda o modal desaparecer antes de continuar.
-                            page.locator("div.ajax.modal").wait_for(state="hidden", timeout=5000)
+                            page.locator("div.ajax.modal").wait_for(state="hidden", timeout=3000)
                         
                         except Exception as e:
                             # Registra erros ocorridos durante a coleta dos produtos similares.
                             logging.exception(f"Erro ao processar similares do produto '{codigo}': {e}")
                             continue
-                        
+                
                 # Trata erros gerais ocorridos durante a busca do código.           
                 except Exception as e:
-                    logging.exception(f"SKY | filial={filial} | codigo={codigo} | erro na busca")
+                    logging.exception(f"S | filial={filial} | codigo={codigo} | erro na busca")
                     resultados.append({
-                        "fornecedor": "SKY Auto Peças",
+                        "fornecedor": "S",
                         "cod_buscado": codigo, 
                         "cod_fabricante": None,
                         "descricao": f"ERRO: {e}", 
@@ -282,13 +278,13 @@ def executar(codigos,filiais):
                         "fabricante": None,
                         "status": f"ERRO DE COLETA: {type(e).__name__}",
                         "prazo": None,
-                        "filial": filial
+                        "filial": None
                     })
 
                 finally:
                     # Aguarda um intervalo aleatório antes de iniciar a próxima busca.
                     page.wait_for_timeout(random.randint(1000, 2000))
-                    
+
     # Converte os resultados coletados em DataFrame.
     resultado_busca = pd.DataFrame(resultados)
 
@@ -297,15 +293,15 @@ def executar(codigos,filiais):
 
 # Permite executar este módulo individualmente para testes.
 if __name__ == "__main__":
-
-    # Códigos utilizados no teste.
-    codigos = ["ECO1651","VC-232"]
-
-    # Filiais utilizadas no teste.
-    filiais = ['EMBREPAR (Londrina)','ENVIA PEÇAS (LONDRINA)']
     
+    # Códigos utilizados no teste.
+    codigos = ["1234","4567"]
+    
+    # Filiais utilizadas no teste.
+    filiais = ["Filial 01","Filial 02"]
+        
     # Executa o coletor individualmente.
     resultado = executar(codigos, filiais)
-
+    
     # Exibe o resultado da coleta.
     print(resultado)

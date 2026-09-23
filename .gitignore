@@ -1,25 +1,3 @@
 .env
-
 __pycache__/
 *.pyc
-
-Logs/
-*.log
-
-checkpoints/
-chrome_profile_pellegrino/
-
-.streamlit/secrets.toml
-
-Auxiliares/
-Precos Rolemar.xlsx
-
-Auxiliares/
-Filiais Rolemar x Estado.xlsx
-
-Coletas/
-
-Precos-db/
-
-Assets/
-REFFORN.xlsx

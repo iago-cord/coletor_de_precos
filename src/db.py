@@ -4,15 +4,15 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_DIR = BASE_DIR / "Precos-db"
-DB_PATH = DB_DIR / "precos.db"
+DB_PATH = DB_DIR / "database.db"
 
-# Armazena o caminho da pasta para salvar o precos.db
+# Armazena o caminho da pasta para salvar o database.db
 pasta = Path(DB_DIR)
 
-# Armazena o caminho do arquivos precos.db
+# Armazena o caminho do arquivos database.db
 arquivo_db = DB_PATH
 
-# Inicia a conexao com o Banco de Dados passando o caminho do arquivo precos.db
+# Inicia a conexao com o Banco de Dados passando o caminho do arquivo database.db
 conexao = sqlite3.connect(DB_PATH)
 
 # Ativação da função de FOREIGN KEYS (sem essa ativação as FOREIGN KEYS nao funcionam!!)
@@ -28,7 +28,7 @@ cursor.execute("""
                    DATA_COLETA TEXT,
                    STATUS TEXT,
                    QTD_RAW INTEGER,
-                   QTD_ROLEMAR INTEGER
+                   QTD_EMPRESA INTEGER
                )
                """)
 
@@ -40,9 +40,9 @@ cursor.execute("""
                )
                """)
 
-# Adiciona a TABELA FILIAIS_ROLEMAR caso nao exista
+# Adiciona a TABELA FILIAIS_EMPRESA caso nao exista
 cursor.execute("""
-               CREATE TABLE IF NOT EXISTS FILIAIS_ROLEMAR(
+               CREATE TABLE IF NOT EXISTS FILIAIS_EMPRESA(
                    COD_FILIAL INTEGER PRIMARY KEY,
                    ESTADO TEXT
                )
@@ -89,16 +89,16 @@ cursor.execute("""
                )
                """)
 
-# Adiciona a TABELA PRECOS_ROLEMAR caso nao exista
+# Adiciona a TABELA PRECOS_EMPRESA caso nao exista
 cursor.execute("""
-               CREATE TABLE IF NOT EXISTS PRECOS_ROLEMAR(
-                   ID_PRECO_ROLEMAR INTEGER PRIMARY KEY,
+               CREATE TABLE IF NOT EXISTS PRECOS_EMPRESA(
+                   ID_PRECO_EMPRESA INTEGER PRIMARY KEY,
                    ID_COLETA INTEGER NOT NULL,
-                   CODEMP INTEGER, 
+                   COD_EMPRESA INTEGER, 
                    ESTADO TEXT,
-                   CODPROD INTEGER, 
-                   CODGRUPOPROD INTEGER,
-                   REFFORN TEXT,
+                   COD_PRODUTO INTEGER, 
+                   COD_GRUPO INTEGER,
+                   COD_FORNECEDOR TEXT,
                    CARACTERISTICAS TEXT,
                    PRECO_PRINCIPAL REAL,
                    TABELA_DESCONTO INTEGER,
@@ -116,8 +116,8 @@ cursor.execute("""
                     
                    UNIQUE (
                        ID_COLETA,
-                       CODEMP, 
-                       REFFORN
+                       COD_EMPRESA, 
+                       COD_FORNECEDOR
                    )  
                )
                """)
@@ -137,8 +137,8 @@ cursor.execute("""
                    FILIAL_CONCORRENTE TEXT,
                    DATA_COLETA TEXT,
                    ESTADO TEXT,
-                   CODPROD INTEGER,
-                   REFFORN TEXT, 
+                   COD_PRODUTO INTEGER,
+                   COD_FORNECEDOR TEXT, 
                    PRECO_FINAL REAL,
                    TABELA_DESCONTO INTEGER, 
                    DESCRICAO_TABELA TEXT,
@@ -150,61 +150,24 @@ cursor.execute("""
 
 # Adiciona a tabela com REFFORN/CODGRUPOPROD
 cursor.execute("""
-               CREATE TABLE IF NOT EXISTS BUSCA_REFFORN(
-                   CODPROD INTEGER,
-                   REFFORN TEXT, 
-                   CODGRUPOPROD INTEGER, 
-                   DESCRGRUPOPROD TEXT,
+               CREATE TABLE IF NOT EXISTS BUSCA_COD_FORNECEDOR(
+                   COD_PRODUTO INTEGER,
+                   COD_FORNECEDOR TEXT, 
+                   COD_GRUPO INTEGER, 
+                   DESCRICAO_GRUPO TEXT,
                    FATURAMENTO REAL,
                    
                    UNIQUE (
-                       REFFORN,
-                        CODPROD)
+                        COD_FORNECEDOR,
+                        COD_PRODUTO)
                )
                """)
-
-#cursor.execute('DROP TABLE BUSCA_REFFORN')
-
-
-'''cursor.execute("""
-    SELECT
-        ID_COLETA,
-        COD_FABRICANTE,
-        CONCORRENTE,
-        ID_FILIAL_CONCORRENTE
-    FROM RAW_PRECOS
-    LIMIT 30
-""")'''
-
-#cursor.execute('ALTER TABLE PRECOS_ROLEMAR ADD COLUMN PRECO_TOP_MASTER REAL')
-
-#cursor.execute('ALTER TABLE CURATED ADD COLUMN PRECO_TOP_MASTER REAL')
-
-#cursor.execute('ALTER TABLE CURATED ADD COLUMN DIF_PRECO_TOP_MASTER REAL')
-
-cursor.execute('ALTER TABLE CURATED ADD COLUMN PERC_DIF_PRECO_TOP_MASTER REAL')
-
-#for linha in cursor.fetchall():
-#    print(linha)
-
-#print(cursor.fetchone())
-
-cursor.execute("ALTER TABLE CURATED DROP COLUMN PERC_DIF_PRECO_TOP_MASTER_MASTER ")
-
-#cursor.execute("DELETE FROM COLETAS")
-
-#cursor.execute("SELECT * FROM COLETAS")
-#print(cursor.fetchall())
-
-#id_coleta = cursor.lastrowid
-#print(id_coleta)
-
 
 # Aplica as alterações no Banco de dados de forma definitiva (Nao chamar esse metodo faz com que as alterações sejam
 # desfeitas apos fechar a conexao)
 conexao.commit()
 
 # Encerrando a conexao com o Banco de Dados
-conexao.close
+conexao.close()
 
 

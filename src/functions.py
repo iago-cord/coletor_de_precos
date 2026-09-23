@@ -20,7 +20,7 @@ def obter_filiais(page):
 
     return nomes
 
-# Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada DISAPE/RMP
+# Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada DS/R
 def selecionar_filial(page, nome_filial):
     
     popup_filial = page.locator("div.c-dist span.selected.popup-modal")
@@ -38,7 +38,7 @@ def selecionar_filial(page, nome_filial):
     
     retry_acao(lambda:page.locator("form#form-filial button.button", has_text="Aplicar").click())
    
-# Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada SKY
+# Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada S/SPR/SSP
 def selecionar_filial_sky(page, filial):
     
     selec_filial = page.locator("select#secloja")
@@ -47,26 +47,26 @@ def selecionar_filial_sky(page, filial):
 
     page.wait_for_load_state("networkidle", timeout=5000)
     
-# Procura o campo de Busca de produtos e retorna o locator recebe como parametro a pagina PELLEGRINO
+# Procura o campo de Busca de produtos e retorna o locator recebe como parametro a pagina P
 def get_campo_busca(page):
     if page.locator('#ais-searchbox').is_visible():
         return page.locator('#ais-searchbox')
     return page.locator('#search-prod')
 
-# Procura o Botao de Busca de produtos e retorna o locator recebe como parametro a pagina PELLEGRINO
+# Procura o Botao de Busca de produtos e retorna o locator recebe como parametro a pagina P
 def get_botao_buscar(page):
     if page.locator('#btn-ais-BtnPesquisar').is_visible():
         return page.locator('#btn-ais-BtnPesquisar')
     return page.locator('#btn-search-btn-prod')
 
-# Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada AUTONORTE
+# Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada A
 def selecionar_filial_autonorte(page,nome_filial):
     cliente_filial = {
-        "Maranhão": "26570",
-        "Pernambuco": "00238",
-        "Pará": "84001",
-        "Goiás": "66976",
-        "Bahia": "00806"
+        "Maranhão": "cod_cliente",
+        "Pernambuco": "cod_cliente",
+        "Pará": "cod_cliente",
+        "Goiás": "cod_cliente",
+        "Bahia": "cod_cliente"
     }       
     
     codigo = cliente_filial.get(nome_filial)
@@ -128,7 +128,7 @@ def retry_acao(acao, tentativas=5, espera=5):
         if tentativa < tentativas:
             time.sleep(espera)
     
-    logging.error(f"Ação falou após {tentativa}/{tentativas}: "
+    logging.error(f"Ação falhou após {tentativa}/{tentativas}: "
                   f"{type(ultimo_erro).__name__}: {ultimo_erro}")
     
     raise ultimo_erro

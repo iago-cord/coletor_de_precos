@@ -5,17 +5,17 @@ from dotenv import load_dotenv
 import os
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 import logging
-from functions import retry_acao
+from src.functions import retry_acao
 
 # Função responsável por executar a busca dos códigos de produtos.
 # Recebe como parâmetros a lista de códigos e a lista de filiais selecionadas.
 def executar(codigos,filiais):
     
     # Carrega as variáveis de ambiente armazenadas no arquivo .env.
-    # As credenciais serão utilizadas para realizar o login na plataforma DPK.
+    # As credenciais serão utilizadas para realizar o login na plataforma.
     load_dotenv()
-    usuario_login = os.getenv("DPK_USUARIO")
-    senha_login = os.getenv("DPK_SENHA")
+    usuario_login = os.getenv("USUARIO")
+    senha_login = os.getenv("SENHA")
 
     # Cria uma lista vazia onde serão armazenados todos os resultados
     # encontrados durante a coleta.
@@ -34,8 +34,8 @@ def executar(codigos,filiais):
         # Cria uma nova página no navegador.
         page = browser.new_page()
         
-        # Define a URL da página de login da plataforma DPK.
-        url = "https://www.dpk.com.br/#/login"
+        # Define a URL da página de login da plataforma.
+        url = "https://www.sitedoconcorrente.com.br"
         
         # Acessa a página de login.
         retry_acao(lambda: page.goto(url))
@@ -104,12 +104,12 @@ def executar(codigos,filiais):
                         nao_encontrado.wait_for(state='visible')
                         
                         # Registra no log que o código não foi encontrado.
-                        logging.info(f"DPK: {codigo} NÃO ENCONTRADO")
+                        logging.info(f"D: {codigo} NÃO ENCONTRADO")
                         
                         # Adiciona o código à lista de resultados com status
                         # "Não Encontrado" e os demais campos sem informação.
                         resultados.append({
-                            "fornecedor": "DPK",
+                            "fornecedor": "D",
                             "cod_buscado": codigo,
                             "cod_fabricante": None,
                             "descricao": None,
@@ -199,7 +199,7 @@ def executar(codigos,filiais):
                         
                         # Adiciona o produto principal à lista de resultados.
                         resultados.append({
-                            "fornecedor": "DPK",
+                            "fornecedor": "D",
                             "cod_buscado": codigo,
                             "cod_fabricante": cod_fabricante_principal,
                             "descricao": descricao_principal,
@@ -283,7 +283,7 @@ def executar(codigos,filiais):
                             
                             # Adiciona o produto similar à lista de resultados.
                             resultados.append({
-                                "fornecedor": "DPK",
+                                "fornecedor": "D",
                                 "cod_buscado": codigo,
                                 "cod_fabricante": cod_fabricante_similar,
                                 "descricao": descricao_similar,
@@ -317,10 +317,10 @@ def executar(codigos,filiais):
 if __name__ == "__main__":
 
     # Define uma lista de códigos que será utilizada no teste.
-    codigos = ['pd1530', 'vc232', 'eco1615']  
+    codigos = ['56987', '364789']  
     
     # Define uma lista de filiais que será utilizada no teste.
-    filiais = []
+    filiais = ["Filial 01","Filial 02","Filial 03"]
 
     # Executa a função principal passando os códigos e as filiais
     # definidos exclusivamente para o teste deste módulo.

@@ -4,7 +4,7 @@ import random
 from dotenv import load_dotenv
 import os
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
-from functions import selecionar_filial,clique_buscar, retry_acao
+from src.functions import selecionar_filial,clique_buscar, retry_acao
 import logging
 
 # Função responsável por executar a busca dos códigos de produtos.
@@ -14,8 +14,8 @@ def executar(codigos, filiais):
     # Carrega as variáveis de ambiente armazenadas no arquivo .env.
     # As credenciais serão utilizadas para realizar o login na plataforma.
     load_dotenv()
-    usuario_login = os.getenv("DISAPE_USUARIO")
-    senha_login = os.getenv("DISAPE_SENHA")
+    usuario_login = os.getenv("USUARIO")
+    senha_login = os.getenv("SENHA")
 
     # Cria uma lista vazia onde serão armazenados os resultados
     # encontrados durante a coleta.
@@ -34,10 +34,10 @@ def executar(codigos, filiais):
         browser = p.chromium.launch(headless = False)
         page = browser.new_page()
 
-        # URL da página de login da DISAPE
-        url = "https://loja.disape.com.br/customer/account/login"
+        # URL da página de login
+        url = "https://www.sitedoconcorrente.com.br"
         
-        # Acessa a página de login da plataforma DISAPE.
+        # Acessa a página de login da plataforma
         retry_acao(lambda: page.goto(url))
 
         # Localiza o campo de usuário, clica no campo e preenche
@@ -76,7 +76,7 @@ def executar(codigos, filiais):
                 
                 # Registra no log o início do processamento dos códigos
                 # para a filial atual e informa a quantidade de códigos.
-                logging.info(f"Disape: entrando no loop de códigos. Total: {len(codigos)}")
+                logging.info(f"Ds: entrando no loop de códigos. Total: {len(codigos)}")
                 
                 # Abre o seletor de prazo da plataforma.
                 retry_acao(lambda: page.locator("div.c-prazo span.selected.popup-modal").click())
@@ -116,12 +116,12 @@ def executar(codigos, filiais):
                         nao_encontrado.wait_for(state="visible", timeout=3000)
                         
                         # Registra no log que o código não foi encontrado.
-                        logging.info(f"Disape: {codigo} NÃO ENCONTRADO")
+                        logging.info(f"Ds: {codigo} NÃO ENCONTRADO")
                         
                         # Adiciona o código à lista de resultados com status
                         # "NÃO ENCONTRADO" e os demais campos sem informação.
                         resultados.append({
-                            "fornecedor": "DISAPE",
+                            "fornecedor": "DS",
                             "cod_buscado": codigo,
                             "cod_fabricante": None, 
                             "descricao": None,                               
@@ -209,7 +209,7 @@ def executar(codigos, filiais):
                                 
                             # Adiciona o produto principal à lista de resultados.
                             resultados.append({
-                                "fornecedor": "DISAPE",
+                                "fornecedor": "DS",
                                 "cod_buscado": codigo,
                                 "cod_fabricante":cod_fabricante_principal,
                                 "descricao": descricao_principal,
@@ -317,7 +317,7 @@ def executar(codigos, filiais):
 
                                     # Adiciona o produto similar à lista de resultados.
                                     resultados.append({
-                                        "fornecedor": "DISAPE",
+                                        "fornecedor": "DS",
                                         "cod_buscado": codigo,
                                         "cod_fabricante":cod_fabricante_similar,
                                         "descricao": descricao_similar,
@@ -350,9 +350,9 @@ def executar(codigos, filiais):
                 except Exception as e:
 
                         # Registra o código com status de erro e armazena a mensagem da exceção na descrição.
-                        logging.exception(f"DISAPE | filial={filial} | codigo={codigo} | erro na busca")
+                        logging.exception(f"DS | filial={filial} | codigo={codigo} | erro na busca")
                         resultados.append({
-                            "fornecedor": "DISAPE",               
+                            "fornecedor": "DS",               
                             "cod_buscado": codigo,
                             "cod_fabricante": None, 
                             "descricao": f"ERRO: {e}",  
@@ -391,10 +391,10 @@ def executar(codigos, filiais):
 if __name__ == "__main__":
 
     # Define os códigos que serão utilizados durante o teste.
-    codigos = ["ECO1651","VC-232"]
+    codigos = ["2345678","25868"]
 
     # Define as filiais que serão utilizadas durante o teste.
-    filiais = []
+    filiais = ["Filial 01","Filial 02"]
         
     # Executa a coleta utilizando os códigos e filiais definidos acima.
     resultado = executar(codigos, filiais)

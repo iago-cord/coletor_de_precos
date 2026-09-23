@@ -5,17 +5,17 @@ from dotenv import load_dotenv
 import os
 from functions import clique_buscar
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
-from functions import selecionar_filial, retry_acao
+from src.functions import selecionar_filial, retry_acao
 import logging
 
-# Função principal responsável por realizar as buscas dos códigos no site da RMP
+# Função principal responsável por realizar as buscas dos códigos no site
 # e retornar os resultados coletados em um DataFrame.
 def executar(codigos, filiais):
     
     # Carrega as variáveis de ambiente contendo usuário e senha.
     load_dotenv()
-    usuario_login = os.getenv("RMP_USUARIO")
-    senha_login = os.getenv("RMP_SENHA")
+    usuario_login = os.getenv("USUARIO")
+    senha_login = os.getenv("SENHA")
     
     # Lista onde serão armazenados todos os resultados coletados.
     resultados = []
@@ -31,8 +31,8 @@ def executar(codigos, filiais):
         # Cria uma nova página para acesso ao site.
         page = browser.new_page()
         
-        # URL da página de login da RMP
-        url = "https://loja.rmp.com.br/customer/account/login"
+        # URL da página de login
+        url = "https://www.sitedoconcorrente.com.br"
         
         # Acessa o site utilizando a função de retry para tratar possíveis falhas.
         retry_acao(lambda: page.goto(url))
@@ -65,7 +65,7 @@ def executar(codigos, filiais):
                 
                 # Quando uma filial foi informada, realiza sua seleção no site.
                 selecionar_filial(page,filial)
-                logging.info(f"RMP: entrando no loop de códigos. Total: {len(codigos)}")
+                logging.info(f"R: entrando no loop de códigos. Total: {len(codigos)}")
                 
                 # Abre o seletor de prazo.
                 retry_acao(lambda:page.locator("div.c-prazo span.selected.popup-modal").click())
@@ -105,11 +105,11 @@ def executar(codigos, filiais):
                     try:
                         # Aguarda a mensagem de produto não encontrado.
                         nao_encontrado.wait_for(state="visible", timeout=3000)
-                        logging.info(f"RMP: {codigo} NÃO ENCONTRADO")
+                        logging.info(f"R: {codigo} NÃO ENCONTRADO")
 
                         # Registra o código sem resultado.
                         resultados.append({
-                                            "fornecedor": "RMP",
+                                            "fornecedor": "R",
                                             "cod_buscado": codigo,
                                             "cod_fabricante": None, 
                                             "descricao": None,                               
@@ -200,7 +200,7 @@ def executar(codigos, filiais):
                             
                             # Armazena o produto principal nos resultados.
                             resultados.append({
-                                "fornecedor": "RMP",
+                                "fornecedor": "R",
                                 "cod_buscado": codigo,
                                 "cod_fabricante":cod_fabricante_principal,
                                 "descricao": descricao_principal,
@@ -294,7 +294,7 @@ def executar(codigos, filiais):
 
                                     # Armazena o produto similar nos resultados.
                                     resultados.append({
-                                        "fornecedor": "RMP",
+                                        "fornecedor": "R",
                                         "cod_buscado": codigo,
                                         "cod_fabricante":cod_fabricante_similar,
                                         "descricao": descricao_similar,
@@ -322,11 +322,11 @@ def executar(codigos, filiais):
                 except Exception as e:
 
                         # Trata erros gerais ocorridos durante a busca do código.
-                        logging.exception(f"RMP | filial={filial} | codigo={codigo} | erro na busca")
+                        logging.exception(f"R | filial={filial} | codigo={codigo} | erro na busca")
                         
                         # Registra o erro nos resultados para não perder o código que estava sendo processado.
                         resultados.append({
-                            "fornecedor": "RMP",               
+                            "fornecedor": "R",               
                             "cod_buscado": codigo,
                             "cod_fabricante": None, 
                             "descricao": f"ERRO: {e}",  
@@ -365,10 +365,10 @@ def executar(codigos, filiais):
 if __name__ == "__main__":
 
     # Define os códigos que serão utilizados durante o teste.
-    codigos = ["ECO1651","VC-232"]
+    codigos = ["1234","4567"]
     
     # Define as filiais que serão utilizadas durante o teste.
-    filiais = []
+    filiais = ["Filial 01"]
             
     # Executa a coleta utilizando os códigos e filiais definidos acima.
     resultado = executar(codigos, filiais)

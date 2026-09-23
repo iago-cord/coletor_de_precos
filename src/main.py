@@ -1,11 +1,11 @@
-from Coletores import coleta_preco_DISAPE
-from Coletores import coleta_preco_RMP
-from Coletores import coleta_preco_SKY
-from Coletores import coleta_preco_PELLEGRINO
-from Coletores import coleta_preco_AUTONORTE
-from Coletores import coleta_preco_SKY_SP
-from Coletores import coleta_preco_SKY_PR
-from Coletores import coleta_preco_DPK
+from Coletores import coleta_preco_DS
+from Coletores import coleta_preco_R
+from Coletores import coleta_preco_S
+from Coletores import coleta_preco_P
+from Coletores import coleta_preco_A
+from Coletores import coleta_preco_SSP
+from Coletores import coleta_preco_SPR
+from Coletores import coleta_preco_D
 import pandas as pd
 import logging
 import datetime as dt
@@ -48,22 +48,21 @@ def executar_concorrente(nome, modulo, codigos, filiais):
 
 # funcao orquestradora recebendo uma lista de codigos como parametro e um valor boolean que vem 
 # dos checkbox de concorrentes selecionados no app.py
-def executar(codigos, disape=True, rmp=True, sky=True, pellegrino=True, autonorte = True,sky_sp = True ,sky_pr = True , dpk= True,
-             filiais_disape = None, filiais_rmp = None, filiais_sky = None, filiais_autonorte = None, filiais_sky_sp = None, 
-             filiais_sky_pr = None, filiais_dpk= None, callback = None):
-    #codigos = ["ECO1651","VC-232"]
+def executar(codigos, ds=True, r=True, s=True, p=True, a = True,ssp = True ,spr = True , d= True,
+             filiais_ds = None, filiais_r = None, filiais_s = None, filiais_a = None, filiais_ssp = None, 
+             filiais_spr = None, filiais_d= None, callback = None):
     resultados = []
 
     # se true adiciona a etapa a lista nome / modulo
     etapas = []
-    if rmp: etapas.append(("RMP", coleta_preco_RMP, filiais_rmp))
-    if disape: etapas.append(("Disape", coleta_preco_DISAPE, filiais_disape))
-    if sky: etapas.append(("SkyPecas", coleta_preco_SKY, filiais_sky))
-    if pellegrino: etapas.append(("Pellegrino", coleta_preco_PELLEGRINO, None))
-    if autonorte: etapas.append(("Auto Norte",coleta_preco_AUTONORTE, filiais_autonorte ))
-    if sky_sp: etapas.append(("SKY SP",coleta_preco_SKY_SP, filiais_sky_sp))
-    if sky_pr: etapas.append(("SKY PR", coleta_preco_SKY_PR, filiais_sky_pr))
-    if dpk: etapas.append(("DPK", coleta_preco_DPK, filiais_dpk))
+    if r: etapas.append(("R", coleta_preco_R, filiais_r))
+    if ds: etapas.append(("Ds", coleta_preco_DS, filiais_ds))
+    if s: etapas.append(("S", coleta_preco_S, filiais_s))
+    if p: etapas.append(("P", coleta_preco_P, None))
+    if a: etapas.append(("A",coleta_preco_A, filiais_a ))
+    if ssp: etapas.append(("SSP",coleta_preco_SSP, filiais_ssp))
+    if spr: etapas.append(("SPR", coleta_preco_SPR, filiais_spr))
+    if d: etapas.append(("D", coleta_preco_D, filiais_d))
 
     # total de etapas é igual ao tamanho da lista definida anteriormente
     total = len(etapas)
@@ -125,7 +124,7 @@ def executar(codigos, disape=True, rmp=True, sky=True, pellegrino=True, autonort
     # adicionando coluna com a data da coleta
     precos_concorrentes["data coleta"] = dt.datetime.now()
     
-    # se o campo preco vier '--' retornar na coluna status "Sem Estoque"
+    # se o campo preco vier 'None' retornar na coluna status "Sem Estoque"
     precos_concorrentes.loc[precos_concorrentes['preco'] == None, 'status'] = "Sem Estoque"
     
     # removendo hifens e pontos do campo cod_buscado
@@ -145,14 +144,7 @@ def executar(codigos, disape=True, rmp=True, sky=True, pellegrino=True, autonort
     )
     
     # pegando a lista e alterando o valor da coluna status para "Similar"
-    precos_concorrentes.loc[valida_similar,'status'] = "Similar"
-    
     # Ajusta a coluna status
-    precos_concorrentes.loc[
-    precos_concorrentes['cod_buscado'] == precos_concorrentes['cod_fabricante'],
-    'status'
-    ] = 'OK'
-
     precos_concorrentes.loc[
     (precos_concorrentes['cod_buscado'] != precos_concorrentes['cod_fabricante']) &
     (precos_concorrentes['status'] == 'OK'),
@@ -192,7 +184,7 @@ def executar(codigos, disape=True, rmp=True, sky=True, pellegrino=True, autonort
     
     id_coletas = carregar_coleta(precos_concorrentes)
     
-    arquivo = rf'C:\Users\imercado2\OneDrive - GIRANDO COMERCIO DE PECAS LTDA\iMercado - Eder Iago\Coletor Precos\Coletas\coleta_{id_coleta}.xlsx'
+    arquivo = rf'CAMINHO PARA SALVAR ARQUIVO COM DADOS COLETADOS{id_coleta}.xlsx'
     
     if callback:
         callback(0,0,"","⏳ Salvando Arquivo em Excel")

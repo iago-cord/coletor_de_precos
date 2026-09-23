@@ -6,20 +6,20 @@ import subprocess
 import time
 import logging
 import pandas as pd
-from functions import get_campo_busca, get_botao_buscar, retry_acao
+from src.functions import get_campo_busca, get_botao_buscar, retry_acao
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-# Função responsável por executar a busca dos códigos no site da Pellegrino
+# Função responsável por executar a busca dos códigos no site
 def executar(codigos):
     
     # Cria a lista onde serão armazenados os resultados coletados
     resultados = []
     
      # Armazena o caminho do executável do Google Chrome instalado no computador
-    chrome = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+    chrome = "Caminho do Executavel do Chrome"
     
     # Define o diretório do perfil do Chrome que será utilizado na coleta
-    profile = r"C:\Users\imercado2\chrome_profile_pellegrino"
+    profile = "Caminho do profile do Chrome usado para o acesso"
     
     # Define a porta utilizada para realizar a conexão com o Chrome através do protocolo CDP
     debug_port = 9222
@@ -27,9 +27,9 @@ def executar(codigos):
     # Carrega as variáveis de ambiente presentes no arquivo .env
     load_dotenv()
 
-    # Recupera o usuário e senha de acesso da Pellegrino armazenado no .env
-    USUARIO = os.getenv("PELLEGRINO_USER")
-    SENHA = os.getenv("PELLEGRINO_PASSWORD")
+    # Recupera o usuário e senha de acesso armazenado no .env
+    USUARIO = os.getenv("USER")
+    SENHA = os.getenv("PASSWORD")
 
     # Inicializa o Playwright
     with sync_playwright() as p:
@@ -54,10 +54,10 @@ def executar(codigos):
         # Recupera a primeira página aberta dentro do contexto
         page = context.pages[0]
         
-        # URL da página de login da Pellegrino
-        url = "https://compreonline.pellegrino.com.br/Account/Login/?ReturnUrl=%2F"
+        # URL da página de login
+        url = "https://www.sitedoconcorrente.com.br"
 
-        # Acessa a página de login da Pellegrino
+        # Acessa a página de login
         retry_acao(lambda: page.goto(url))
         
         # Aguarda o carregamento inicial do documento HTML
@@ -142,11 +142,11 @@ def executar(codigos):
                 if nao_encontrado.is_visible():
                     
                     # Registra no log que o código não foi encontrado
-                    logging.info(f"Pellegrino: {codigo} NÃO ENCONTRADO")
+                    logging.info(f"P: {codigo} NÃO ENCONTRADO")
                     
                     # Adiciona o resultado como produto não encontrado
                     resultados.append({
-                        "fornecedor": "PELLEGRINO",
+                        "fornecedor": "P",
                         "cod_buscado": codigo,
                         "cod_fabricante": None,
                         "descricao": None,
@@ -287,7 +287,7 @@ def executar(codigos):
                         
                         # Registra o produto como sem estoque ou sem filial disponível
                         resultados.append({
-                            "fornecedor": "PELLEGRINO",
+                            "fornecedor": "P",
                             "cod_buscado": codigo,
                             "cod_fabricante": cod_fabricante,
                             "descricao": descricao,
@@ -305,7 +305,7 @@ def executar(codigos):
                             
                             # Adiciona uma linha de resultado para cada filial encontrada
                             resultados.append({
-                                "fornecedor": "PELLEGRINO",
+                                "fornecedor": "P",
                                 "cod_buscado": codigo,
                                 "cod_fabricante": cod_fabricante,
                                 "descricao": descricao,
@@ -369,7 +369,7 @@ def executar(codigos):
 if __name__ == "__main__":
 
     # Define uma lista de códigos para utilizar no teste
-    codigos = ["ECO1651", "VC-232"]
+    codigos = ["1234", "2345678"]
     
     # Executa a função de coleta passando os códigos definidos acima
     resultado = executar(codigos)

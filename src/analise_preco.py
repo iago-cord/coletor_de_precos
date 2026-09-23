@@ -1,11 +1,9 @@
 import pandas as pd
-import numpy as np
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.formatting.rule import CellIsRule
-
+from io import BytesIO
 
 def analise_preco(arquivo):
-    
 
     arquivo['DESCRICAO'] = arquivo['DESCRICAO'].str.strip()
 
@@ -13,7 +11,7 @@ def analise_preco(arquivo):
 
     colunas_inicio = ['ESTADO','COD_FABRICANTE', 'DESCRICAO']
 
-    colunas_final = ['MENOR PRECO','PRECO ROLEMAR', 'DIF %', 'PRECO TOP MASTER', 'DIF % TOP MASTER']
+    colunas_final = ['MENOR PRECO','PRECO EMPRESA', 'DIF %', 'PRECO CLUBE', 'DIF % CLUBE']
 
     concorrentes = arquivo['CONCORRENTE'].unique().tolist()
 
@@ -29,7 +27,7 @@ def analise_preco(arquivo):
     comparativo.reset_index(drop=False, inplace=True)
 
     comparativo_final = comparativo.merge(
-        arquivo[['DESCRICAO', 'PRECO ROLEMAR', 'PRECO TOP MASTER', 'ESTADO', 'COD_FABRICANTE']],
+        arquivo[['DESCRICAO', 'PRECO EMPRESA', 'PRECO CLUBE', 'ESTADO', 'COD_FABRICANTE']],
         left_on=['ESTADO', 'COD_FABRICANTE'],
         right_on=['ESTADO', 'COD_FABRICANTE'],
         how='left')
@@ -40,15 +38,17 @@ def analise_preco(arquivo):
 
     comparativo_final['MENOR PRECO'] = comparativo_final.loc[:,concorrentes].min(axis=1)
 
-    comparativo_final['DIF %'] = comparativo_final['PRECO ROLEMAR'] / comparativo_final['MENOR PRECO'] -1
+    comparativo_final['DIF %'] = comparativo_final['PRECO EMPRESA'] / comparativo_final['MENOR PRECO'] -1
 
-    comparativo_final['DIF % TOP MASTER'] = comparativo_final['PRECO TOP MASTER'] / comparativo_final['MENOR PRECO'] -1
+    comparativo_final['DIF % CLUBE'] = comparativo_final['PRECO CLUBE'] / comparativo_final['MENOR PRECO'] -1
 
     ordena_colunas = colunas_inicio + concorrentes + colunas_final
 
     comparativo_final = comparativo_final[ordena_colunas]
+    
+    output = BytesIO()
 
-    with pd.ExcelWriter('comparativo_estado.xlsx') as writer:
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
         for estado, dados in comparativo_final.groupby('ESTADO'):
             dados.to_excel(
                 writer,
@@ -70,7 +70,7 @@ def analise_preco(arquivo):
                 for cell in row:
                     cell.border = Border(left=borda, right=borda, top=borda, bottom=borda)
             # Formatação Moeda  
-            colunas_moeda = [*concorrentes,'MENOR PRECO', 'PRECO ROLEMAR', 'PRECO TOP MASTER']
+            colunas_moeda = [*concorrentes,'MENOR PRECO', 'PRECO EMPRESA', 'PRECO CLUBE']
             
             for coluna in colunas_moeda:
                 col = comparativo_final.columns.get_loc(coluna) + 1
@@ -84,7 +84,7 @@ def analise_preco(arquivo):
                         c.number_format = 'R$ #,##0.00'
             
             # Formatação Percentual         
-            colunas_percentual = ['DIF %', 'DIF % TOP MASTER']
+            colunas_percentual = ['DIF %', 'DIF % CLUBE']
             
             for coluna in colunas_percentual:
                 col = comparativo_final.columns.get_loc(coluna) + 1
@@ -129,10 +129,7 @@ def analise_preco(arquivo):
                         maior_tamanho= max(maior_tamanho, tamanho)
                 
                 ws.column_dimensions[letra].width = maior_tamanho + 2
-
-#comparativo_final.to_excel('teste_comparativo.xlsx', index=True)
-if __name__ == "__main__":
+                
+    output.seek(0)
     
-    arquivo = pd.read_excel(r"C:\Users\imercado2\OneDrive - GIRANDO COMERCIO DE PECAS LTDA\iMercado - Eder Iago\Queries\analise_precos.xlsx")
-    
-    analise_preco(arquivo)
+    return output

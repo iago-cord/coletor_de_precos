@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import logging
 import pandas as pd
-from functions import selecionar_filial_autonorte, retry_acao
+from src.functions import selecionar_filial_a, retry_acao
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 # Função responsável por executar a busca dos códigos de produtos.
@@ -14,8 +14,8 @@ def executar(codigos, filiais):
     # Carrega as variáveis de ambiente armazenadas no arquivo .env.
     # As credenciais são utilizadas para realizar o login na plataforma.
     load_dotenv()
-    usuario_login = os.getenv("AUTONORTE_USER")
-    senha_login = os.getenv("AUTONORTE_PASSWORD")
+    usuario_login = os.getenv("USER")
+    senha_login = os.getenv("PASSWORD")
 
     # Cria uma lista vazia que armazenará os resultados encontrados durante a coleta.
     resultados = []
@@ -32,7 +32,7 @@ def executar(codigos, filiais):
         # Em seguida, acessa a página inicial da plataforma.
         browser = p.chromium.launch(headless = False)
         page = browser.new_page()
-        url = "https://kki.autonorte.com.br"
+        url = "https://www.sitedoconcorrente.com.br"
         retry_acao(lambda: page.goto(url))
         
         # Localiza o campo de e-mail, clica no campo e preenche com o usuário
@@ -67,7 +67,7 @@ def executar(codigos, filiais):
             # Caso uma filial tenha sido informada, executa a função responsável
             # por selecionar a filial correspondente na plataforma.
             if filial:
-                selecionar_filial_autonorte(page,filial)
+                selecionar_filial_a(page,filial)
 
             # Percorre todos os códigos informados para realizar a pesquisa
             # na filial atualmente selecionada.
@@ -113,12 +113,12 @@ def executar(codigos, filiais):
                         nao_encontrado.wait_for(state='visible', timeout=3000)
                         
                         # Registra no log que o código não foi encontrado.
-                        logging.info(f"Auto Norte: {codigo} NÃO ENCONTRADO")
+                        logging.info(f"A: {codigo} NÃO ENCONTRADO")
                         
                         # Adiciona o código à lista de resultados com status
                         # "NÃO ENCONTRADO" e os demais campos sem informação.
                         resultados.append({
-                                        "fornecedor": "Auto Norte",
+                                        "fornecedor": "A",
                                         "cod_buscado": codigo,
                                         "cod_fabricante": None, 
                                         "descricao": None,                               
@@ -232,7 +232,7 @@ def executar(codigos, filiais):
                         
                         # Adiciona todas as informações coletadas do produto à lista de resultados.  
                         resultados.append({
-                            "fornecedor": "Auto Norte",
+                            "fornecedor": "A",
                             "cod_buscado": codigo,
                             "cod_fabricante":cod_fabricante,
                             "descricao": descricao,
@@ -272,10 +272,10 @@ def executar(codigos, filiais):
 if __name__ == "__main__":
     
     # Define uma lista de códigos para serem pesquisados.
-    codigos = ["ECO1651","VC232"]  
+    codigos = ["14763","374156"]  
     
     # Define as filiais que serão utilizadas durante o teste.
-    filiais = ["Maranhão","Pernambuco"]
+    filiais = ["Filial 01","Filial 02","Filial 03","Filial 04"]
     
     # Executa a coleta utilizando os códigos e filiais definidos acima.
     resultado = executar(codigos, filiais)

@@ -8,7 +8,7 @@ def iniciar_coleta(cursor):
                     DATA_COLETA,
                     STATUS,
                     QTD_RAW,
-                    QTD_ROLEMAR
+                    QTD_EMPRESA
                 )
                 VALUES (?, ?, ?, ?)
                 """, (
@@ -38,14 +38,14 @@ def preparar_dados(df):
     ]].itertuples(index=False, name=None)
 
 # transforma cada linha do df em tuplas com os valores para o fazer o INSERT no banco
-def preparar_dados_rolemar(df):
+def preparar_dados_empresa(df):
     return df [[
         'ID_COLETA',
         'FILIAL',
         'ESTADO',
         'COD_PRODUTO',
         'COD_GRUPO_PRODUTO',
-        'REF_FORN',
+        'COD_FORNECEDOR',
         'CARACTERISTICAS',
         'PRECO_PRINCIPAL',
         'TABELA_DESCONTO',
@@ -54,7 +54,7 @@ def preparar_dados_rolemar(df):
         'PRECO_FINAL',
         'MARCA',
         'DESCRICAO_GRUPO',
-        'PRECO_TOP_MASTER'
+        'PRECO_CLUBE'
     ]].itertuples(index=False, name=None)
     
 # transforma cada linha do df em tuplas com os valores para o fazer o INSERT no banco
@@ -73,7 +73,7 @@ def preparar_dados_curated(df):
         'DATA_COLETA',
         'ESTADO',
         'COD_PRODUTO',
-        'REF_FORN',
+        'COD_FORNECEDOR',
         'PRECO_FINAL',
         'TABELA_DESCONTO',
         'DESCRICAO_TABELA',
@@ -81,34 +81,34 @@ def preparar_dados_curated(df):
         'PERC_DIF_PRECO',
         'SITUACAO',
         'DESCRICAO_GRUPO',
-        'PRECO_TOP_MASTER',
-        'DIF_PRECO_TOP_MASTER',
-        'PERC_DIF_PRECO_TOP_MASTER'
+        'PRECO_CLUBE',
+        'DIF_PRECO_CLUBE',
+        'PERC_DIF_PRECO_CLUBE'
     ]].itertuples(index=False, name=None)
     
     
-def preparar_refforn(df):
+def preparar_cod_fornecedor(df):
     return df[[
-        'CODPROD',
-        'REFFORN',
-        'CODGRUPOPROD',
-        'DESCRGRUPOPROD',
+        'COD_PRODUTO',
+        'COD_FORNECEDOR',
+        'COD_GRUPO',
+        'DESCRICAO_GRUPO',
         'FATURAMENTO'
         
     ]].itertuples(index=False, name=None)
 
 # Executa o INSERT no banco baseado na tuplas criadas na função preparar_dados   
-def insert_refforn(cursor, refforn):
+def insert_cod_fornecedor(cursor, cod_fornecedor):
     cursor.executemany("""
-        INSERT INTO BUSCA_REFFORN (
-          CODPROD,
-          REFFORN,
-          CODGRUPOPROD,
-          DESCRGRUPOPROD,
+        INSERT INTO BUSCA_COD_FORNECEDOR (
+          COD_PRODUTO,
+          COD_FORNECEDOR,
+          COD_GRUPO,
+          DESCRICAO_GRUPO,
           FATURAMENTO
         )
         VALUES (?, ?, ?, ?, ?)
-    """, refforn)
+    """, cod_fornecedor)
 
 
 
@@ -134,15 +134,15 @@ def insert_raw_precos(cursor, dados):
     """, dados)
     
 # Executa o INSERT no banco baseado na tuplas criadas na função preparar_dados   
-def insert_precos_rolemar(cursor, dados_rolemar):
+def insert_precos_empresa(cursor, dados_empresa):
     cursor.executemany("""
-                       INSERT INTO PRECOS_ROLEMAR (
+                       INSERT INTO PRECOS_EMPRESA (
                            ID_COLETA,
                            FILIAL,
                            ESTADO,
                            COD_PRODUTO,
                            COD_GRUPO_PRODUTO,
-                           REF_FORN,
+                           COD_FORNECEDOR,
                            CARACTERISTICAS,
                            PRECO_PRINCIPAL,
                            TABELA_DESCONTO,
@@ -151,10 +151,10 @@ def insert_precos_rolemar(cursor, dados_rolemar):
                            PRECO_FINAL,
                            MARCA,
                            DESCRICAO_GRUPO,
-                           PRECO_TOP_MASTER
+                           PRECO_CLUBE
                        )
                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                       """, dados_rolemar)
+                       """, dados_empresa)
     
 # Executa o INSERT no banco baseado na tuplas criadas na função preparar_dados  
 def insert_precos_curated(cursor, dados_curated):
@@ -173,7 +173,7 @@ def insert_precos_curated(cursor, dados_curated):
                            DATA_COLETA,
                            ESTADO,
                            COD_PRODUTO,
-                           REF_FORN,
+                           COD_FORNECEDOR,
                            PRECO_FINAL,
                            TABELA_DESCONTO,
                            DESCRICAO_TABELA,
@@ -181,22 +181,22 @@ def insert_precos_curated(cursor, dados_curated):
                            PERC_DIF_PRECO,
                            SITUACAO,
                            DESCRICAO_GRUPO,
-                           PRECO_TOP_MASTER,
-                           DIF_PRECO_TOP_MASTER,
-                           PERC_DIF_PRECO_TOP_MASTER
+                           PRECO_CLUBE,
+                           DIF_PRECO_CLUBE,
+                           PERC_DIF_PRECO_CLUBE
                        )
                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                        """, dados_curated)
     
 # Faz um UPDATE na tabela COLETAS sinalizando que o carregamento terminou e uma contagem de quantas linhas 
 # foram inseridas
-def finalizar_coleta(cursor, id_coleta, qtd_raw, qtd_rolemar):
+def finalizar_coleta(cursor, id_coleta, qtd_raw, qtd_empresa):
     
     cursor.execute("""
                    UPDATE COLETAS
                    SET
                         STATUS = 'CONCLUIDA',
                         QTD_RAW = ?,
-                        QTD_ROLEMAR = ?
+                        QTD_EMPRESA = ?
                         WHERE ID_COLETA = ?
-                   """, (qtd_raw, qtd_rolemar, id_coleta))
+                   """, (qtd_raw, qtd_empresa, id_coleta))
