@@ -189,20 +189,9 @@ Entre os recursos disponíveis estão:
 
 ### Capturas de tela
 
-> **Adicionar aqui os prints da interface.**
+<img width="1063" height="550" alt="image" src="https://github.com/user-attachments/assets/013df424-b08a-4b99-8a38-bb72595cd4cd" />
 
-Exemplo de organização:
-
-```text
-docs/
-└── images/
-    ├── interface_principal.png
-    ├── selecao_fornecedores.png
-    ├── acompanhamento_coleta.png
-    └── resultado_final.png
-```
-
-As imagens podem ser inseridas posteriormente nesta seção.
+<img width="651" height="197" alt="image" src="https://github.com/user-attachments/assets/9501ea6b-4851-49a1-8283-e1176ebfdf9b" />
 
 ---
 
@@ -210,13 +199,8 @@ As imagens podem ser inseridas posteriormente nesta seção.
 
 Ao final da execução, os dados coletados são organizados para permitir a análise dos preços encontrados.
 
-> **Adicionar aqui um print do relatório final.**
+<img width="1025" height="639" alt="image" src="https://github.com/user-attachments/assets/527a1515-0891-4b87-a311-a00c7662ce6c" />
 
-Sugestão:
-
-```text
-![Relatório final](docs/images/resultado_final.png)
-```
 
 ---
 
