@@ -39,7 +39,7 @@ def selecionar_filial(page, nome_filial):
     retry_acao(lambda:page.locator("form#form-filial button.button", has_text="Aplicar").click())
    
 # Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada S/SPR/SSP
-def selecionar_filial_sky(page, filial):
+def selecionar_filial_s(page, filial):
     
     selec_filial = page.locator("select#secloja")
     
@@ -60,7 +60,7 @@ def get_botao_buscar(page):
     return page.locator('#btn-search-btn-prod')
 
 # Localiza e seleciona a filial, recebe como parametro o nome da filial e a pagina a ser procurada A
-def selecionar_filial_autonorte(page,nome_filial):
+def selecionar_filial_a(page,nome_filial):
     cliente_filial = {
         "Maranhão": "cod_cliente",
         "Pernambuco": "cod_cliente",

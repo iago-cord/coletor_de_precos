@@ -1,19 +1,19 @@
-from Coletores import coleta_preco_DS
-from Coletores import coleta_preco_R
-from Coletores import coleta_preco_S
-from Coletores import coleta_preco_P
-from Coletores import coleta_preco_A
-from Coletores import coleta_preco_SSP
-from Coletores import coleta_preco_SPR
-from Coletores import coleta_preco_D
+from src.Coletores import coleta_preco_DS
+from src.Coletores import coleta_preco_R
+from src.Coletores import coleta_preco_S
+from src.Coletores import coleta_preco_P
+from src.Coletores import coleta_preco_A
+from src.Coletores import coleta_preco_SSP
+from src.Coletores import coleta_preco_SPR
+from src.Coletores import coleta_preco_D
 import pandas as pd
 import logging
 import datetime as dt
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from functions import tratar_preco_sem_estoque
-from load_db import carregar_coleta
-from transforms import buscar_comparativo
+from src.functions import tratar_preco_sem_estoque
+from src.load_db import carregar_coleta
+from src.transforms import buscar_comparativo
 import time
 
 # Cria a pasta checkpoints caso nao exista para salvar os arquivos RAW após o fim da coleta de cada concorrente

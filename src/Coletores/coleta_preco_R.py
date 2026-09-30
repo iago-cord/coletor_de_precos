@@ -3,7 +3,7 @@ import pandas as pd
 import random
 from dotenv import load_dotenv
 import os
-from functions import clique_buscar
+from src.functions import clique_buscar
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from src.functions import selecionar_filial, retry_acao
 import logging

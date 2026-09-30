@@ -1,9 +1,9 @@
 import pandas as pd
 import sqlite3
-from transforms import (tratar_preco, tratar_duplicados, adicionar_dados_filiais, renomear_colunas, 
+from src.transforms import (tratar_preco, tratar_duplicados, adicionar_dados_filiais, renomear_colunas, 
                         adicionar_filiais_empresa, renomear_colunas_empresa, tratar_preco_empresa, 
                         filtro_base_empresa, precos_comparativo, renomear_colunas_curated, tratar_duplicados_empresa)
-from INSERT import (iniciar_coleta, preparar_dados, insert_raw_precos, finalizar_coleta,preparar_dados_empresa,
+from src.insert import (iniciar_coleta, preparar_dados, insert_raw_precos, finalizar_coleta,preparar_dados_empresa,
                     insert_precos_empresa, preparar_dados_curated, insert_precos_curated)
 from pathlib import Path
 

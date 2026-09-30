@@ -14,10 +14,10 @@ BG_PATH = BASE_DIR / "Assets" / "background_interface.png"
 LOGO_PATH = BASE_DIR / "Assets" / "logo_empresa.png"
 
 # Inicia a conexao com o Banco de Dados passando o caminho do arquivo precos.db
-conexao = sqlite3.connect(DB_PATH)
+#conexao = sqlite3.connect(DB_PATH)
 
 # Query para obter os dados da CURVA ABC
-busca_cod_fornecedor = pd.read_sql_query("""
+'''busca_cod_fornecedor = pd.read_sql_query("""
                                   SELECT
                                   COD_PRODUTO,
                                   COD_FORNECEDOR,
@@ -26,7 +26,7 @@ busca_cod_fornecedor = pd.read_sql_query("""
                                   FATURAMENTO
                                   FROM BUSCA_COD_FORNECEDOR
                                   """, conexao)
-
+'''
 
 # Titulo da pagina
 st.title("Coletor de Preços")
